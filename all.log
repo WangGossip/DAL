@@ -1,0 +1,5 @@
+2021-03-30 15:09:18,505 - log.py[line:36] - DEBUG: debug
+2021-03-30 15:09:18,506 - log.py[line:37] - INFO: info
+2021-03-30 15:09:18,506 - log.py[line:38] - WARNING: 警告
+2021-03-30 15:09:18,506 - log.py[line:39] - ERROR: 报错
+2021-03-30 15:09:18,506 - log.py[line:40] - CRITICAL: 严重

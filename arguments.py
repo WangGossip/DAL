@@ -3,12 +3,12 @@ import os
 
 def get_args():
     parser = argparse.ArgumentParser(description='PyTorch DAL Framework')
-    parser.add_argument('--cuda', action='store_true', 
+    parser.add_argument('--no-cuda', action='store_true', 
                         help='If training is to be done on a GPU')
     # *数据集相关参数
-    parser.add_argument('--dataset', type=str, default='mnist', metavar='D', 
+    parser.add_argument('--dataset', type=str, default='MNIST', metavar='D', 
                         help='Name of the dataset used.')
-    parser.add_argument('--data_path', type=str, default='./data', 
+    parser.add_argument('--data-path', type=str, default='./../../datasets', 
                         help='Path to where the data is')
     # *AL采样相关参数
     parser.add_argument('--seed', type=int, default=1, metavar='S',
@@ -46,4 +46,6 @@ def get_args():
 
     if not os.path.exists(args.out_path):
         os.mkdir(args.out_path)
+    if not os.path.exists(args.data_path):
+        os.mkdir(args.data_path)
     return args

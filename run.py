@@ -1,18 +1,29 @@
 import numpy as np
 import torch
+import os
+import time
 
 # *个人编写文件库
 import arguments
 
 from torchvision import transforms
+from log import Logger
 
 def main(args):
-    #* 读取参数，进行各项设置
+    time_0 = time.time()#程序开始时间
+    # *设置日志相关参数
+    name_log_file = os.path.join(args.out_path,args.log_name)
+    log = Logger(name_log_file,level='debug')
+    log.logger.debug('程序开始')
+
+    # *读取参数，进行各项设置
     SEED=args.seed
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     np.random.seed(SEED)
     torch.manual_seed(SEED)
     # PROP_INIT_LB = 0.25
+    # *读取数据集
+    
 
 if __name__ == '__main__':
     args = arguments.get_args()
