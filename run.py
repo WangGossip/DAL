@@ -9,6 +9,7 @@ import arguments
 from torchvision import transforms
 from log import Logger
 from dataset import get_dataset
+from dataset import get_handler
 
 def main(args):
     time_0 = time.time()#程序开始时间
@@ -18,6 +19,7 @@ def main(args):
     log.logger.debug('程序开始')
 
     # *关于数据集参数,更新args
+    DATA_NAME = args.dataset
     transform_pool = {'MNIST':
                         {'transform':transforms.Compose([transforms.ToTensor(), 
                             transforms.Normalize((0.1307,), (0.3081,))])},
@@ -31,7 +33,7 @@ def main(args):
                         {'transform':transforms.Compose([transforms.ToTensor(), 
                             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))])}                                                        
     }
-    args = args.update(transform_pool[args.dataset])
+    args = args.update(transform_pool[DATA_NAME])
 
     # *读取参数，进行各项设置
     SEED=args.seed
@@ -43,7 +45,7 @@ def main(args):
 
     # *读取数据集
     time_1 = time.time()#实验开始时间(读数据)
-    X_tr, Y_tr, X_te, Y_te = get_dataset(args.dataset, args.data_path)
+    X_tr, Y_tr, X_te, Y_te = get_dataset(DATA_NAME, args.data_path)
 
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
@@ -65,6 +67,9 @@ def main(args):
     idxs_tmp = np.arange(n_pool)
     np.random.shuffle(idxs_tmp)
     idxs_lb[idxs_tmp[:n_init_pool]]=True
+
+    # 加载网络模型等
+    handler = get_handler(DATA_NAME)
 
 if __name__ == '__main__':
     args = arguments.get_args()
