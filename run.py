@@ -8,6 +8,7 @@ import arguments
 
 from torchvision import transforms
 from log import Logger
+from dataset import get_dataset
 
 def main(args):
     time_0 = time.time()#程序开始时间
@@ -16,14 +17,54 @@ def main(args):
     log = Logger(name_log_file,level='debug')
     log.logger.debug('程序开始')
 
+    # *关于数据集参数,更新args
+    transform_pool = {'MNIST':
+                        {'transform':transforms.Compose([transforms.ToTensor(), 
+                            transforms.Normalize((0.1307,), (0.3081,))])},
+                    'FashionMNIST':
+                        {'transform':transforms.Compose([transforms.ToTensor(), 
+                            transforms.Normalize((0.1307,), (0.3081,))])},
+                    'SVHN':
+                        {'transform':transforms.Compose([transforms.ToTensor(), 
+                            transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))])},
+                    'CIFAR10':
+                        {'transform':transforms.Compose([transforms.ToTensor(), 
+                            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))])}                                                        
+    }
+    args = args.update(transform_pool[args.dataset])
+
     # *读取参数，进行各项设置
     SEED=args.seed
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
     np.random.seed(SEED)
     torch.manual_seed(SEED)
-    # PROP_INIT_LB = 0.25
+    # 是否使用GPU
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+
     # *读取数据集
+    time_1 = time.time()#实验开始时间(读数据)
+    X_tr, Y_tr, X_te, Y_te = get_dataset(args.dataset, args.data_path)
+
+    train_kwargs = {'batch_size': args.batch_size}
+    test_kwargs = {'batch_size': args.test_batch_size}
+    if use_cuda:
+        cuda_kwargs = {'num_workers': 1,
+                       'pin_memory': True}
+        train_kwargs.update(cuda_kwargs)
+        test_kwargs.update(cuda_kwargs)
+    # 数值计算部分
+    n_pool = len(Y_tr)
+    n_test = len(Y_te)
+    n_init_pool = int(n_pool * args.prop_init)
+    n_budget = int(n_pool * args.prop_budget)
+    n_lb_once = int((n_budget - n_init_pool) / args.times) 
+    log.logger.info('本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；总预算为：{}；单次采样标记数目为：{}'.format(n_pool,n_init_pool,n_budget,n_lb_once))
     
+    # 初始化标记集合
+    idxs_lb = np.zeros(n_pool, dtype=bool)
+    idxs_tmp = np.arange(n_pool)
+    np.random.shuffle(idxs_tmp)
+    idxs_lb[idxs_tmp[:n_init_pool]]=True
 
 if __name__ == '__main__':
     args = arguments.get_args()
