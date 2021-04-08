@@ -9,3 +9,11 @@
 ), 'train_kwargs': {'batch_size': 64, 'num_workers': 1, 'pin_memory': True}, 'test_kwargs': {'batch_size': 1000, 'num_workers': 1, 'pin_memory': True}}
 
 2021-04-08 19:33:25,388 - run.py[line:69] - INFO: 本次实验中，训练集样本数为：60000；其中初始标记数目为：15000；总预算为：30000；单次采样标记数目为：1500
+2021-04-08 20:32:30,137 - run.py[line:20] - DEBUG: 程序开始
+2021-04-08 20:32:30,256 - run.py[line:61] - DEBUG: 当前的额外训练、测试等参数如下：
+{'transform': Compose(
+    ToTensor()
+    Normalize(mean=(0.1307,), std=(0.3081,))
+), 'train_kwargs': {'batch_size': 64, 'num_workers': 1, 'pin_memory': True}, 'test_kwargs': {'batch_size': 1000, 'num_workers': 1, 'pin_memory': True}}
+
+2021-04-08 20:32:30,257 - run.py[line:69] - INFO: 本次实验中，训练集样本数为：60000；其中初始标记数目为：15000；总预算为：30000；单次采样标记数目为：1500

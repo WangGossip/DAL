@@ -25,73 +25,75 @@ class Strategy:
         self.idxs_lb = idxs_lb
 
     def _train(self, epoch, loader_tr, optimizer):
-        self.clf.train()
+        self.model.train()
+        # *每次要取得样本、标签、对应的id
         for batch_idx, (x, y, idxs) in enumerate(loader_tr):
             x, y = x.to(self.device), y.to(self.device)
             optimizer.zero_grad()
-            out, e1 = self.clf(x)
+            out, e1 = self.model(x)
             loss = F.cross_entropy(out, y)
             loss.backward()
             optimizer.step()
+            # todo 逐步记录训练的结果，包括loss、epoch等
 
     def train(self):
-        n_epoch = self.args['n_epoch']
-        self.clf = self.net().to(self.device)
-        # optimizer = optim.SGD(self.clf.parameters(), **self.args['optimizer_args'])
-        optimizer = optim.Adadelta(self.clf.parameters(), lr=args.lr)
+        n_epoch = self.args.epochs
+        self.model = self.net().to(self.device)
+        optimizer = optim.Adadelta(self.model.parameters(), lr=args.lr)
         scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-
+        # idxs_train记录所有被训练过的样本
         idxs_train = np.arange(self.n_pool)[self.idxs_lb]
-        
-        loader_tr = DataLoader(self.handler(self.X[idxs_train], self.Y[idxs_train], transform=self.args['transform']),
-                            shuffle=True, **self.train_kwargs)
+        # 读取训练集
+        loader_tr = DataLoader(self.handler(self.X[idxs_train], self.Y[idxs_train], transform=self.args_add['transform']),
+                            shuffle=True, **self.args_add['train_kwargs'])
 
         for epoch in range(1, n_epoch+1):
             self._train(epoch, loader_tr, optimizer)
 
     def predict(self, X, Y):
+        # 读取测试集
         loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
-                            shuffle=False, **self.args['loader_te_args'])
+                            shuffle=False, **self.args_add['test_kwargs'])
 
-        self.clf.eval()
-        P = torch.zeros(len(Y), dtype=Y.dtype)
+        self.model.eval()
+        pred_te = torch.zeros(len(Y), dtype=Y.dtype)
         with torch.no_grad():
             for x, y, idxs in loader_te:
                 x, y = x.to(self.device), y.to(self.device)
-                out, e1 = self.clf(x)
+                out, e1 = self.model(x)
 
                 pred = out.max(1)[1]
-                P[idxs] = pred.cpu()
+                pred_te[idxs] = pred.cpu()
 
-        return P
+        return pred_te
 
     def predict_prob(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args['transform']),
-                            shuffle=False, **self.args['loader_te_args'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
+                            shuffle=False, **self.args_add['test_kwargs'])
 
-        self.clf.eval()
+        self.model.eval()
         probs = torch.zeros([len(Y), len(np.unique(Y))])
         with torch.no_grad():
             for x, y, idxs in loader_te:
                 x, y = x.to(self.device), y.to(self.device)
-                out, e1 = self.clf(x)
+                out, e1 = self.model(x)
                 prob = F.softmax(out, dim=1)
                 probs[idxs] = prob.cpu()
         
         return probs
 
     def predict_prob_dropout(self, X, Y, n_drop):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args['transform']),
-                            shuffle=False, **self.args['loader_te_args'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
+                            shuffle=False, **self.args_add['test_kwargs'])
 
-        self.clf.train()
+        self.model.train()
         probs = torch.zeros([len(Y), len(np.unique(Y))])
         for i in range(n_drop):
             print('n_drop {}/{}'.format(i+1, n_drop))
             with torch.no_grad():
                 for x, y, idxs in loader_te:
                     x, y = x.to(self.device), y.to(self.device)
-                    out, e1 = self.clf(x)
+                    out, e1 = self.model(x)
                     prob = F.softmax(out, dim=1)
                     probs[idxs] += prob.cpu()
         probs /= n_drop
@@ -99,31 +101,31 @@ class Strategy:
         return probs
 
     def predict_prob_dropout_split(self, X, Y, n_drop):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args['transform']),
-                            shuffle=False, **self.args['loader_te_args'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
+                            shuffle=False, **self.args_add['test_kwargs'])
 
-        self.clf.train()
+        self.model.train()
         probs = torch.zeros([n_drop, len(Y), len(np.unique(Y))])
         for i in range(n_drop):
             print('n_drop {}/{}'.format(i+1, n_drop))
             with torch.no_grad():
                 for x, y, idxs in loader_te:
                     x, y = x.to(self.device), y.to(self.device)
-                    out, e1 = self.clf(x)
+                    out, e1 = self.model(x)
                     probs[i][idxs] += F.softmax(out, dim=1).cpu()
         
         return probs
 
     def get_embedding(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args['transform']),
-                            shuffle=False, **self.args['loader_te_args'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
+                            shuffle=False, **self.args_add['test_kwargs'])
 
-        self.clf.eval()
-        embedding = torch.zeros([len(Y), self.clf.get_embedding_dim()])
+        self.model.eval()
+        embedding = torch.zeros([len(Y), self.model.get_embedding_dim()])
         with torch.no_grad():
             for x, y, idxs in loader_te:
                 x, y = x.to(self.device), y.to(self.device)
-                out, e1 = self.clf(x)
+                out, e1 = self.model(x)
                 embedding[idxs] = e1.cpu()
         
         return embedding
