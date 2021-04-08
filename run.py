@@ -10,6 +10,7 @@ from torchvision import transforms
 from log import Logger
 from dataset import get_dataset
 from dataset import get_handler
+from model import get_net
 
 def main(args):
     time_0 = time.time()#程序开始时间
@@ -33,7 +34,6 @@ def main(args):
                         {'transform':transforms.Compose([transforms.ToTensor(), 
                             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))])}                                                        
     }
-    args = args.update(transform_pool[DATA_NAME])
 
     # *读取参数，进行各项设置
     SEED=args.seed
@@ -54,6 +54,14 @@ def main(args):
                        'pin_memory': True}
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
+    # 额外的参数
+    args_add = transform_pool[DATA_NAME]
+    args_add.update(train_kwargs)
+    args_add.update(test_kwargs)
+    
+
+    print(args_add)
+
     # 数值计算部分
     n_pool = len(Y_tr)
     n_test = len(Y_te)
@@ -70,10 +78,18 @@ def main(args):
 
     # 加载网络模型等
     handler = get_handler(DATA_NAME)
+    net = get_net(DATA_NAME)
+    # strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args)
+
+# def test_args(args):
+#     print(args)
+#     return
+
 
 if __name__ == '__main__':
     args = arguments.get_args()
     main(args)
+    # test_args(args)
 
 
 # # 参数相关

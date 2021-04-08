@@ -34,7 +34,6 @@ class Net1(nn.Module):
         e1 = F.relu(x)
         x = self.dropout2(e1, training=self.training)
         x = self.fc2(x)
-        # output = F.log_softmax(x, dim=1)
         return x, e1
 
     def get_embedding_dim(self):

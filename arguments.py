@@ -16,7 +16,7 @@ def get_args():
     parser.add_argument('--prop-init', type=float, default='0.25', metavar='R', 
                         help='Proportion of sample initialization')
     parser.add_argument('--prop-budget', type=float, default='0.5', metavar='R', 
-                        help='Proportion of sample budget')
+                        help='Total proportion of sample budget')
     parser.add_argument('--times', type=int, default=10, metavar='T', 
                         help='Times of sampling')                        
     # *训练&测试相关参数 
