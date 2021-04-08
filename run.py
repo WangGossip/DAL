@@ -56,11 +56,9 @@ def main(args):
         test_kwargs.update(cuda_kwargs)
     # 额外的参数
     args_add = transform_pool[DATA_NAME]
-    args_add.update(train_kwargs)
-    args_add.update(test_kwargs)
-    
-
-    print(args_add)
+    args_add['train_kwargs']=train_kwargs
+    args_add['test_kwargs']=test_kwargs
+    log.logger.debug('当前的额外训练、测试等参数如下：\n{}\n'.format(args_add))
 
     # 数值计算部分
     n_pool = len(Y_tr)
