@@ -17,3 +17,20 @@
 ), 'train_kwargs': {'batch_size': 64, 'num_workers': 1, 'pin_memory': True}, 'test_kwargs': {'batch_size': 1000, 'num_workers': 1, 'pin_memory': True}}
 
 2021-04-08 20:32:30,257 - run.py[line:69] - INFO: 本次实验中，训练集样本数为：60000；其中初始标记数目为：15000；总预算为：30000；单次采样标记数目为：1500
+2021-04-09 18:19:48,172 - run.py[line:22] - DEBUG: 程序开始
+2021-04-09 18:19:48,875 - run.py[line:63] - DEBUG: 当前的额外训练、测试等参数如下：
+{'transform': Compose(
+    ToTensor()
+    Normalize(mean=(0.1307,), std=(0.3081,))
+), 'train_kwargs': {'batch_size': 64, 'num_workers': 1, 'pin_memory': True}, 'test_kwargs': {'batch_size': 1000, 'num_workers': 1, 'pin_memory': True}}
+
+2021-04-09 18:19:48,875 - run.py[line:71] - INFO: 本次实验中，训练集样本数为：60000；其中初始标记数目为：15000；总预算为：30000；单次采样标记数目为：1500
+2021-04-09 19:17:35,072 - run.py[line:22] - DEBUG: 程序开始
+2021-04-09 19:17:35,785 - run.py[line:63] - DEBUG: 当前的额外训练、测试等参数如下：
+{'transform': Compose(
+    ToTensor()
+    Normalize(mean=(0.1307,), std=(0.3081,))
+), 'train_kwargs': {'batch_size': 64, 'num_workers': 1, 'pin_memory': True}, 'test_kwargs': {'batch_size': 1000, 'num_workers': 1, 'pin_memory': True}}
+
+2021-04-09 19:17:35,785 - run.py[line:71] - INFO: 本次实验中，训练集样本数为：60000；其中初始标记数目为：15000；总预算为：30000；单次采样标记数目为：1500
+2021-04-09 19:17:35,787 - /home/wxy/code/DAL/function_test.py[line:3] - DEBUG: 这是其余文件测试

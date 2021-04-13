@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
 
 class Strategy:
-    def __init__(self, X, Y, idxs_lb, net, handler, args, args_add, device):
+    def __init__(self, X, Y, idxs_lb, net, handler, args, args_add, log, device):
         self.X = X
         self.Y = Y
         self.idxs_lb = idxs_lb
@@ -14,6 +14,7 @@ class Strategy:
         self.handler = handler
         self.args = args
         self.args_add = args_add
+        self.log = log
         self.n_pool = len(Y)
         self.device = device
 
@@ -35,6 +36,7 @@ class Strategy:
             loss.backward()
             optimizer.step()
             # todo 逐步记录训练的结果，包括loss、epoch等
+            
 
     def train(self):
         n_epoch = self.args.epochs

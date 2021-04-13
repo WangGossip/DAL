@@ -12,11 +12,14 @@ from dataset import get_dataset
 from dataset import get_handler
 from model import get_net
 
+# *测试区
+from function_test import ano_log
 def main(args):
     time_0 = time.time()#程序开始时间
     # *设置日志相关参数
     name_log_file = os.path.join(args.out_path,args.log_name)
-    log = Logger(name_log_file,level='debug')
+    name_log_file_date = name_log_file + time.strftime(".%Y-%m-%d", time.localtime())
+    log = Logger(name_log_file_date,level='debug')
     log.logger.debug('程序开始')
 
     # *关于数据集参数,更新args
@@ -77,7 +80,10 @@ def main(args):
     # 加载网络模型等
     handler = get_handler(DATA_NAME)
     net = get_net(DATA_NAME)
-    # strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args)
+    # *日志复用测试
+    # ano_log(log)
+    # 测试成功
+    strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
 
 # def test_args(args):
 #     print(args)
