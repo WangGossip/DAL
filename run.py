@@ -5,6 +5,8 @@ import time
 
 # *个人编写文件库
 import arguments
+from query_strategies import strategy, RandomSampling
+
 
 from torchvision import transforms
 from log import Logger
@@ -85,9 +87,32 @@ def main(args):
     # 测试成功
     strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
 
-# def test_args(args):
-#     print(args)
-#     return
+    # *训练开始
+    times = args.times
+    log.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
+    # *第一次训练
+    strategy.train()
+    P = strategy.predict(X_te, Y_te)
+    acc = np.zeros(times + 1)
+    rd = 0      # 记录循环采样次数
+    acc[rd] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
+    log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd,acc[rd]))
+
+    for rd in range(1, times + 1):
+        # *先根据筛选策略进行抽样，修改标记
+        smp_idxs = strategy.query(n_lb_once)
+        idxs_lb[smp_idxs] = True
+
+        # *oracle标记环节，并训练
+        strategy.update(idxs_lb)
+        strategy.train()
+
+        # *测试结果
+        P_tmp = strategy.predict(X_te, Y_te)
+        acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
+        log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd, acc[rd]))
+
+    log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；结果准确率为{}'.format(type(strategy).__name__, SEED, acc))
 
 
 if __name__ == '__main__':

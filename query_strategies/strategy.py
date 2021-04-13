@@ -35,14 +35,18 @@ class Strategy:
             loss = F.cross_entropy(out, y)
             loss.backward()
             optimizer.step()
-            # todo 逐步记录训练的结果，包括loss、epoch等
-            
+            #  逐步记录训练的结果，包括loss、epoch等
+            if batch_idx % self.args.log_interval == 0:
+                self.log.logger.debug('epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx * len(x), len(loader_tr.dataset), 
+                    100. * batch_idx / len(loader_tr), loss.item()
+                ))
 
     def train(self):
         n_epoch = self.args.epochs
         self.model = self.net().to(self.device)
-        optimizer = optim.Adadelta(self.model.parameters(), lr=args.lr)
-        scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
+        optimizer = optim.Adadelta(self.model.parameters(), lr=self.args.lr)
+        scheduler = StepLR(optimizer, step_size=1, gamma=self.args.gamma)
         # idxs_train记录所有被训练过的样本
         idxs_train = np.arange(self.n_pool)[self.idxs_lb]
         # 读取训练集

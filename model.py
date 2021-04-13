@@ -32,7 +32,7 @@ class Net1(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc1(x)
         e1 = F.relu(x)
-        x = self.dropout2(e1, training=self.training)
+        x = self.dropout2(e1)
         x = self.fc2(x)
         return x, e1
 
