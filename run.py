@@ -118,9 +118,13 @@ def main(args):
         P_tmp = strategy.predict(X_te, Y_te)
         acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
         log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd, acc[rd]))
-    # 存储训练结果：需要的是acc；loss不考虑，直接看日志；
+    # 存储训练结果：需要的是acc；loss不考虑，直接看日志；除此之外因为画图需要，需要各种比例；
+    # 存一下两个数据
+    sta_prop = np.zeros(2)
+    sta_prop[0] = args.prop_init
+    sta_prop[1] = args.prop_budget
     file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
-    np.savez(file_results, acc=acc)
+    np.savez(file_results, acc=acc, sta_prop=sta_prop)
     log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；结果准确率为{}'.format(type(strategy).__name__, SEED, acc))
 
 def test_args(args):
