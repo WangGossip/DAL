@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def get_net(name):
-    if name == 'MNIST':
+    if name == 'Net1':
         return Net1
     elif name == 'FashionMNIST':
         return Net1

@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
 
+# *这是基于池方法的通用框架，若仅在‘筛选策略’步骤有差异可以进行通用；
 class Strategy:
     def __init__(self, X, Y, idxs_lb, net, handler, args, args_add, log, device):
         self.X = X
@@ -72,6 +73,9 @@ class Strategy:
                 pred_te[idxs] = pred.cpu()
 
         return pred_te
+
+    def save_results(self, file_results):
+        return
 
     def predict_prob(self, X, Y):
         loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),

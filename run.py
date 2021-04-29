@@ -16,16 +16,23 @@ from model import get_net
 
 # *测试区
 from function_test import ano_log
+
+# import ptvsd
+# ptvsd.enable_attach(address = ('10.60.150.25', 3000))
+# ptvsd.wait_for_attach()
+
 def main(args):
     time_0 = time.time()#程序开始时间
     # *设置日志相关参数
-    name_log_file = os.path.join(args.out_path,args.log_name)
-    name_log_file_date = name_log_file + time.strftime(".%Y-%m-%d", time.localtime())
+    name_log_file = os.path.join(args.logs_path,args.log_name)
+    # 日志名称精确到时分秒
+    name_log_file_date = name_log_file + time.strftime(".%Y-%m-%d-%H:%M:%S", time.localtime())
     log = Logger(name_log_file_date,level='debug')
     log.logger.debug('程序开始')
 
     # *关于数据集参数,更新args
     DATA_NAME = args.dataset
+    # todo 不同数据可能要额外计算
     transform_pool = {'MNIST':
                         {'transform':transforms.Compose([transforms.ToTensor(), 
                             transforms.Normalize((0.1307,), (0.3081,))])},
@@ -41,6 +48,7 @@ def main(args):
     }
 
     # *读取参数，进行各项设置
+    # 随机数种子设置
     SEED=args.seed
     np.random.seed(SEED)
     torch.manual_seed(SEED)
@@ -51,7 +59,7 @@ def main(args):
     # *读取数据集
     time_1 = time.time()#实验开始时间(读数据)
     X_tr, Y_tr, X_te, Y_te = get_dataset(DATA_NAME, args.data_path)
-
+    # 训练、测试参数
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
     if use_cuda:
@@ -81,11 +89,10 @@ def main(args):
 
     # 加载网络模型等
     handler = get_handler(DATA_NAME)
-    net = get_net(DATA_NAME)
-    # *日志复用测试
-    # ano_log(log)
-    # 测试成功
-    strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
+    net = get_net(args.model_name)
+    # 筛选策略选择
+    if args.method == 'RS':
+        strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
 
     # *训练开始
     times = args.times
@@ -111,10 +118,13 @@ def main(args):
         P_tmp = strategy.predict(X_te, Y_te)
         acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
         log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd, acc[rd]))
-
+    # 存储训练结果：需要的是acc；loss不考虑，直接看日志；
+    file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
+    np.savez(file_results, acc=acc)
     log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；结果准确率为{}'.format(type(strategy).__name__, SEED, acc))
 
-
+def test_args(args):
+    print(args.save_results)
 if __name__ == '__main__':
     args = arguments.get_args()
     main(args)
