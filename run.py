@@ -119,7 +119,7 @@ def main(args):
         acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
         log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd, acc[rd]))
     # 存储训练结果：需要的是acc；loss不考虑，直接看日志；除此之外因为画图需要，需要各种比例；
-    # 存一下两个数据
+    # 存一下两个数据，起始比例和预算
     sta_prop = np.zeros(2)
     sta_prop[0] = args.prop_init
     sta_prop[1] = args.prop_budget
