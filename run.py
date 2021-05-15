@@ -5,7 +5,7 @@ import time
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling
 
 
 from torchvision import transforms
@@ -93,6 +93,12 @@ def main(args):
     # 筛选策略选择
     if args.method == 'RS':
         strategy = RandomSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
+    elif args.method == 'LC':
+        strategy = LeastConfidence(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
+    elif args.method == 'MS':
+        strategy = MarginSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
+    elif args.method == 'ES':
+        strategy = EntropySampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
 
     # *训练开始
     times = args.times
