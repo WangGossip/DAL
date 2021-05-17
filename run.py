@@ -5,7 +5,7 @@ import time
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling
 
 
 from torchvision import transforms
@@ -99,6 +99,10 @@ def main(args):
         strategy = MarginSampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
     elif args.method == 'ES':
         strategy = EntropySampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
+    elif args.method == 'EST':
+        strategy = EntropySamplingThr(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
+    elif args.method == 'EMS':
+        strategy = Entropy_Multi_Sampling(X_tr, Y_tr, idxs_lb, net, handler, args, args_add, log, device)
 
     # *训练开始
     times = args.times
@@ -131,7 +135,7 @@ def main(args):
     sta_prop[1] = args.prop_budget
     file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
     np.savez(file_results, acc=acc, sta_prop=sta_prop)
-    log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；结果准确率为{}'.format(type(strategy).__name__, SEED, acc))
+    log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；结果准确率为\n{}'.format(type(strategy).__name__, SEED, acc))
 
 def test_args(args):
     print(args.save_results)
