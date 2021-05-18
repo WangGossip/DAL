@@ -6,7 +6,7 @@ import time
 # *个人编写文件库
 import arguments
 from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling
-
+from function import get_mnist_prop
 
 from torchvision import transforms
 from log import Logger
@@ -81,6 +81,10 @@ def main(args):
     n_lb_once = int((n_budget - n_init_pool) / args.times) 
     log.logger.info('本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；总预算为：{}；单次采样标记数目为：{}'.format(n_pool,n_init_pool,n_budget,n_lb_once))
     
+    # 可能用到的数据
+    if args.dataset == 'MNIST':
+        count_class = 10
+    
     # 初始化标记集合
     idxs_lb = np.zeros(n_pool, dtype=bool)
     idxs_tmp = np.arange(n_pool)
@@ -110,15 +114,22 @@ def main(args):
     # *第一次训练
     strategy.train()
     P = strategy.predict(X_te, Y_te)
+    samples_props = [] #用于记录每次采样时各个种类的样本比例
     acc = np.zeros(times + 1)
     rd = 0      # 记录循环采样次数
+
+    # 计算初次采样比例
+    tmp_props = get_mnist_prop(idxs_tmp[:n_init_pool], Y_tr, n_init_pool, count_class)
+    samples_props.append(tmp_props)
     acc[rd] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
-    log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd,acc[rd]))
+    log.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
 
     for rd in range(1, times + 1):
         # *先根据筛选策略进行抽样，修改标记
         smp_idxs = strategy.query(n_lb_once)
         idxs_lb[smp_idxs] = True
+        tmp_props = get_mnist_prop(smp_idxs, Y_tr, n_lb_once, count_class)
+        samples_props.append(tmp_props)
 
         # *oracle标记环节，并训练
         strategy.update(idxs_lb)
@@ -127,15 +138,15 @@ def main(args):
         # *测试结果
         P_tmp = strategy.predict(X_te, Y_te)
         acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
-        log.logger.info('Sampling Round {} \n testing accuracy {}'.format(rd, acc[rd]))
+        log.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
     # 存储训练结果：需要的是acc；loss不考虑，直接看日志；除此之外因为画图需要，需要各种比例；
     # 存一下两个数据，起始比例和预算
     sta_prop = np.zeros(2)
     sta_prop[0] = args.prop_init
     sta_prop[1] = args.prop_budget
     file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
-    np.savez(file_results, acc=acc, sta_prop=sta_prop)
-    log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；结果准确率为\n{}'.format(type(strategy).__name__, SEED, acc))
+    np.savez(file_results, acc=acc, sta_prop=sta_prop, samples_props=samples_props)
+    log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n每次采样的数据比例为：\n{}'.format(type(strategy).__name__, SEED, acc, samples_props))
 
 def test_args(args):
     print(args.save_results)
