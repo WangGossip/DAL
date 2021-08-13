@@ -41,8 +41,10 @@ def get_args():
                         help='Path to save logs')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--log-name', type=str, default='accuracies.log', 
+    parser.add_argument('--log-name', type=str, default='run_record', 
                         help='Final performance of the models will be saved with this name')
+    parser.add_argument('--log-level', type=str, default='debug', 
+                        help='Level for writing log')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For saving the current Model')
     parser.add_argument('--save-results', action='store_false', default=True, 

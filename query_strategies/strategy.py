@@ -7,15 +7,18 @@ from torch.optim.lr_scheduler import StepLR
 
 # *这是基于池方法的通用框架，若仅在‘筛选策略’步骤有差异可以进行通用；
 class Strategy:
-    def __init__(self, X, Y, idxs_lb, net, handler, args, args_add, log, device):
+    def __init__(self, X, Y, idxs_lb, net, handler, args, device):
         self.X = X
         self.Y = Y
         self.idxs_lb = idxs_lb
         self.net = net
         self.handler = handler
         self.args = args
-        self.args_add = args_add
-        self.log = log
+        self.T = args.timer
+        self.log = args.log_run
+        self.transform = args.transform
+        self.train_kwargs = args.train_kwargs
+        self.test_kwargs = args.test_kwargs
         self.n_pool = len(Y)
         self.device = device
 
@@ -38,12 +41,16 @@ class Strategy:
             optimizer.step()
             #  逐步记录训练的结果，包括loss、epoch等
             if batch_idx % self.args.log_interval == 0:
+                self.T.stop()
                 self.log.logger.debug('epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(x), len(loader_tr.dataset), 
                     100. * batch_idx / len(loader_tr), loss.item()
                 ))
+                self.T.start()
 
     def train(self):
+        csv_record_trloss = self.args.csv_record_trloss
+
         n_epoch = self.args.epochs
         self.model = self.net().to(self.device)
         optimizer = optim.Adadelta(self.model.parameters(), lr=self.args.lr)
@@ -51,16 +58,17 @@ class Strategy:
         # idxs_train记录所有被训练过的样本
         idxs_train = np.arange(self.n_pool)[self.idxs_lb]
         # 读取训练集
-        loader_tr = DataLoader(self.handler(self.X[idxs_train], self.Y[idxs_train], transform=self.args_add['transform']),
-                            shuffle=True, **self.args_add['train_kwargs'])
+        loader_tr = DataLoader(self.handler(self.X[idxs_train], self.Y[idxs_train], transform=self.transform),
+                            shuffle=True, **self.train_kwargs)
 
+        self.T.start()
         for epoch in range(1, n_epoch+1):
             self._train(epoch, loader_tr, optimizer)
 
     def predict(self, X, Y):
         # 读取测试集
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
-                            shuffle=False, **self.args_add['test_kwargs'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+                            shuffle=False, **self.test_kwargs)
 
         self.model.eval()
         pred_te = torch.zeros(len(Y), dtype=Y.dtype)
@@ -78,8 +86,8 @@ class Strategy:
         return
 
     def predict_prob(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
-                            shuffle=False, **self.args_add['test_kwargs'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+                            shuffle=False, **self.test_kwargs)
 
         self.model.eval()
         probs = torch.zeros([len(Y), len(np.unique(Y))])
@@ -93,8 +101,8 @@ class Strategy:
         return probs
 
     def predict_prob_dropout(self, X, Y, n_drop):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
-                            shuffle=False, **self.args_add['test_kwargs'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+                            shuffle=False, **self.test_kwargs)
 
         self.model.train()
         probs = torch.zeros([len(Y), len(np.unique(Y))])
@@ -111,8 +119,8 @@ class Strategy:
         return probs
 
     def predict_prob_dropout_split(self, X, Y, n_drop):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
-                            shuffle=False, **self.args_add['test_kwargs'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+                            shuffle=False, **self.test_kwargs)
 
         self.model.train()
         probs = torch.zeros([n_drop, len(Y), len(np.unique(Y))])
@@ -127,8 +135,8 @@ class Strategy:
         return probs
 
     def get_embedding(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.args_add['transform']),
-                            shuffle=False, **self.args_add['test_kwargs'])
+        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+                            shuffle=False, **self.test_kwargs)
 
         self.model.eval()
         embedding = torch.zeros([len(Y), self.model.get_embedding_dim()])
