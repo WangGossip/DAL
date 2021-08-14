@@ -94,8 +94,8 @@ class Strategy:
         tmp_time = self.T.stop()
         self.log.logger.info('采样次数：{}, 平均loss为：{:.4f}, 准确率为：{}/{}({:.2f}%), 预测用时：{}s'.
                             format(self.args.rd, test_loss, correct, len_testdata, 100*acc, tmp_time))
-        self.args.csv_record_tracc.write_data([self.args.rd, acc, test_loss])
-        return pred_te
+        self.args.csv_record_tracc.write_data([self.args.rd, self.args.n_budget_used, acc, test_loss])
+        return  acc
 
     def save_results(self, file_results):
         return

@@ -8,8 +8,8 @@ from torch.utils.data.dataset import Dataset
 # *个人编写文件库
 import arguments
 from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling
-from function import get_mnist_prop, get_results_dir
-from tools import Timer, csv_results
+from function import get_mnist_prop, get_results_dir, draw_tracc
+from tools import Timer, csv_results, label_count
 
 from torchvision import transforms
 from log import Logger
@@ -38,7 +38,7 @@ def main(args):
     args.csv_record_tracc = csv_record_tracc
     args.csv_record_trsample = csv_record_trsample
     csv_record_trloss.write_title(['sampling_time', 'epoch', 'batch_idx', 'loss'])
-    csv_record_tracc.write_title(['sampling_time', 'acc', 'loss'])
+    csv_record_tracc.write_title(['sampling_time', 'sampled_count', 'acc', 'loss'])
     csv_record_trsample.write_title(['sampling_time', 'current_count', 'total_count'])#分别是，采样第几次、当前采样的比例、总比例
     # logger类
     log_run = Logger(args, level=args.log_level)
@@ -104,11 +104,13 @@ def main(args):
     T.start()
 
     # 数值计算部分
+    times = args.times
     n_pool = len(Y_tr)
     n_test = len(Y_te)
     n_init_pool = int(n_pool * args.prop_init)
     n_budget = int(n_pool * args.prop_budget)
-    n_lb_once = int((n_budget - n_init_pool) / args.times) 
+    n_lb_once = (n_budget - n_init_pool) // times
+    n_budget_used = 0
     log_run.logger.info('本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；总预算为：{}；单次采样标记数目为：{}'.format(n_pool,n_init_pool,n_budget,n_lb_once))
     
     # 初始化标记集合
@@ -137,39 +139,70 @@ def main(args):
         strategy = Entropy_Multi_Sampling(X_tr, Y_tr, idxs_lb, net, handler, args, device)
 
     # *训练开始
-    times = args.times
     log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
+    # 一些参数，用于计数 首先初始化
+    labels_count = label_count(times+1, n_pool)
     # *第一次训练
-    rd = 0      # 记录循环采样次数
+    rd = 0      # 记录循环采样次数，round
     args.sampling_time = rd
+    args.n_budget_used = n_budget_used
+    n_budget_used += n_init_pool
     strategy.train()
-    P = strategy.predict(X_te, Y_te)
+    acc_tmp = strategy.predict(X_te, Y_te)
     # todo 加一个类，改写函数、保存比例
+    labels_count.write_sampling_once(idxs_tmp[:n_init_pool], Y_tr, rd)
+    tmp_props, tmp_total_props = labels_count.get_count(rd)
+    log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
     samples_props = [] #用于记录每次采样时各个种类的样本比例
-    acc = np.zeros(times + 1)
+    samples_props_total = []
 
+    acc = np.zeros(times + 1)
+    acc[rd] = acc_tmp
+    samples_props.append(tmp_props)
+    samples_props_total.append(tmp_total_props)
 
     # 计算初次采样比例
-    tmp_props = get_mnist_prop(idxs_tmp[:n_init_pool], Y_tr, n_init_pool, count_class)
-    samples_props.append(tmp_props)
-    acc[rd] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
-    log_run.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
+    # tmp_props = get_mnist_prop(idxs_tmp[:n_init_pool], Y_tr, n_init_pool, count_class)
+    
+    # acc[rd] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
+    # log_run.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
 
     for rd in range(1, times + 1):
         # *先根据筛选策略进行抽样，修改标记
-        smp_idxs = strategy.query(n_lb_once)
+        if rd != times:
+            n_lb_use = n_lb_once
+        else:
+            n_lb_use = n_budget - n_budget_used
+        n_budget_used += n_lb_use
+        smp_idxs = strategy.query(n_lb_use)
         idxs_lb[smp_idxs] = True
-        tmp_props = get_mnist_prop(smp_idxs, Y_tr, n_lb_once, count_class)
+        labels_count.write_sampling_once(idxs_lb[smp_idxs], Y_tr, rd)
+        tmp_props, tmp_total_props = labels_count.get_count(rd)
         samples_props.append(tmp_props)
+        samples_props_total.append(tmp_total_props)
+        log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
 
         # *oracle标记环节，并训练
         strategy.update(idxs_lb)
         strategy.train()
 
         # *测试结果
-        P_tmp = strategy.predict(X_te, Y_te)
-        acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
-        log_run.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
+        acc_tmp = strategy.predict(X_te, Y_te)
+        acc[rd] = acc_tmp
+
+        # acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
+        # log_run.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
+    
+    csv_record_trloss.close()
+    csv_record_tracc.close()
+    csv_record_trsample.close()
+    # *根据CSV画图
+    T.start()
+    draw_tracc(args)
+    tmp_t = T.stop()
+    log_run.logger.info('画图用时：{:.4f} s'.format(tmp_t))
+    log_run.logger.info('运行log存储路径为：{}\n实验结果存储路径为：{}'.format(args.log_run.filename,args.out_path))
+
     # 存储训练结果：需要的是acc；loss不考虑，直接看日志；除此之外因为画图需要，需要各种比例；
     # 存一下两个数据，起始比例和预算
     sta_prop = np.zeros(2)
