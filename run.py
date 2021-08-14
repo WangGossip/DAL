@@ -37,9 +37,9 @@ def main(args):
     args.csv_record_trloss = csv_record_trloss
     args.csv_record_tracc = csv_record_tracc
     args.csv_record_trsample = csv_record_trsample
-    csv_record_trloss.write_title(['sampling_time', 'batch_idx', 'loss'])
+    csv_record_trloss.write_title(['sampling_time', 'epoch', 'batch_idx', 'loss'])
     csv_record_tracc.write_title(['sampling_time', 'acc', 'loss'])
-    csv_record_trsample.write_title(['sampling_time', 'current_count', 'total_count'])
+    csv_record_trsample.write_title(['sampling_time', 'current_count', 'total_count'])#分别是，采样第几次、当前采样的比例、总比例
     # logger类
     log_run = Logger(args, level=args.log_level)
     args.log_run = log_run
@@ -138,19 +138,22 @@ def main(args):
 
     # *训练开始
     times = args.times
-    log.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
+    log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
     # *第一次训练
+    rd = 0      # 记录循环采样次数
+    args.sampling_time = rd
     strategy.train()
     P = strategy.predict(X_te, Y_te)
+    # todo 加一个类，改写函数、保存比例
     samples_props = [] #用于记录每次采样时各个种类的样本比例
     acc = np.zeros(times + 1)
-    rd = 0      # 记录循环采样次数
+
 
     # 计算初次采样比例
     tmp_props = get_mnist_prop(idxs_tmp[:n_init_pool], Y_tr, n_init_pool, count_class)
     samples_props.append(tmp_props)
     acc[rd] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
-    log.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
+    log_run.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
 
     for rd in range(1, times + 1):
         # *先根据筛选策略进行抽样，修改标记
@@ -166,7 +169,7 @@ def main(args):
         # *测试结果
         P_tmp = strategy.predict(X_te, Y_te)
         acc[rd] = 1.0 * (Y_te==P_tmp).sum().item() / len(Y_te)
-        log.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
+        log_run.logger.info('Sampling Round {} \n testing accuracy {} \n sampling prop {} \n'.format(rd, acc[rd], tmp_props))
     # 存储训练结果：需要的是acc；loss不考虑，直接看日志；除此之外因为画图需要，需要各种比例；
     # 存一下两个数据，起始比例和预算
     sta_prop = np.zeros(2)
@@ -174,7 +177,7 @@ def main(args):
     sta_prop[1] = args.prop_budget
     file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
     np.savez(file_results, acc=acc, sta_prop=sta_prop, samples_props=samples_props)
-    log.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n每次采样的数据比例为：\n{}'.format(type(strategy).__name__, SEED, acc, samples_props))
+    log_run.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n每次采样的数据比例为：\n{}'.format(type(strategy).__name__, SEED, acc, samples_props))
 
 def test_args(args):
     print(args.save_results)
