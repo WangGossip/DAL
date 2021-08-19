@@ -61,9 +61,16 @@ def main(args):
                         format(DATA_NAME, MODEL_NAME, args.epochs, args.batch_size, args.lr, args.prop_budget))
     T.start()    
     # ~关于数据集参数,更新args
+    # -类别实际名称
+    text_labels = {
+        'MNIST':['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        'FashionMNIST': ['t-shirt', 'trouser', 'pullover', 'dress', 
+        'coat', 'sandal', 'shirt','sneaker', 'bag', 'ankle boot']
+    }
     # -类别列表
-    count_class_list = {'MNIST':10, 'FashionMNIST':10}
-    count_class = count_class_list[DATA_NAME]
+    # count_class_list = {'MNIST':10, 'FashionMNIST':10}
+    count_class = len(text_labels[DATA_NAME])
+
     # -计算一个transform的列表
     transforms_list = {
         'MNIST':
@@ -152,16 +159,20 @@ def main(args):
     acc_tmp = strategy.predict(X_te, Y_te)
     # todo 加一个类，改写函数、保存比例
     labels_count.write_sampling_once(idxs_tmp[:n_init_pool], Y_tr, rd)
-    tmp_props, tmp_total_props = labels_count.get_count(rd)
+    tmp_props, tmp_total_props, tmp_count, tmp_total_count = labels_count.get_count(rd)
     log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
     samples_props = [] #用于记录每次采样时各个种类的样本比例
     samples_props_total = []
+    samples_count = []
+    samples_count_total = []
 
     acc = np.zeros(times + 1)
     acc[rd] = acc_tmp
     samples_props.append(tmp_props)
     samples_props_total.append(tmp_total_props)
-
+    samples_count.append(tmp_count)
+    samples_count_total.append(tmp_total_count)
+    csv_record_trsample.write_data([rd, tmp_count, tmp_total_count])
     # 计算初次采样比例
     # tmp_props = get_mnist_prop(idxs_tmp[:n_init_pool], Y_tr, n_init_pool, count_class)
     
@@ -181,9 +192,12 @@ def main(args):
         smp_idxs = strategy.query(n_lb_use)
         idxs_lb[smp_idxs] = True
         labels_count.write_sampling_once(smp_idxs, Y_tr, rd)
-        tmp_props, tmp_total_props = labels_count.get_count(rd)
+        tmp_props, tmp_total_props, tmp_count, tmp_total_count = labels_count.get_count(rd)
         samples_props.append(tmp_props)
         samples_props_total.append(tmp_total_props)
+        samples_count.append(tmp_count)
+        samples_count_total.append(tmp_total_count)
+        csv_record_trsample.write_data([rd, tmp_count, tmp_total_count])        
         log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
 
         # *oracle标记环节，并训练
@@ -203,6 +217,9 @@ def main(args):
     # *根据CSV画图
     T.start()
     draw_tracc(args)
+    draw_samples_prop(args, samples_count, text_labels[DATA_NAME], 'samples_each_count.png')
+    draw_samples_prop(args, samples_count_total, text_labels[DATA_NAME], 'samples_each_total.png')
+
     tmp_t = T.stop()
     log_run.logger.info('画图用时：{:.4f} s'.format(tmp_t))
     log_run.logger.info('运行log存储路径为：{}\n实验结果存储路径为：{}'.format(args.log_run.filename,args.out_path))
@@ -222,5 +239,6 @@ def test_args(args):
     draw_samples_prop(args)
 if __name__ == '__main__':
     args = arguments.get_args()
-    # main(args)
-    test_args(args)
+    # test_args(args)
+    main(args)
+

@@ -6,25 +6,27 @@ def get_args():
     parser.add_argument('--no-cuda', action='store_true', 
                         help='If training is to be done on a GPU')
     # *数据集相关参数
-    parser.add_argument('--dataset', type=str, default='MNIST', metavar='D', 
+    parser.add_argument('--dataset', type=str, default='FashionMNIST', metavar='D', 
                         help='Name of the dataset used.')
     parser.add_argument('--data-path', type=str, default='./../../datasets', 
                         help='Path to where the data is')
     # *AL采样相关参数
     parser.add_argument('--method', type=str, default='RS', 
                         help='strategy used for sampling')
+    parser.add_argument('--method-init', type=str, default='RS', 
+                        help='strategy used for initialization sampling')                        
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--prop-init', type=float, default='0.2', metavar='R', 
+    parser.add_argument('--prop-init', type=float, default='0.1', metavar='R', 
                         help='Proportion of sample initialization')
-    parser.add_argument('--prop-budget', type=float, default='0.4', metavar='R', 
+    parser.add_argument('--prop-budget', type=float, default='0.2', metavar='R', 
                         help='Total proportion of sample budget')
     parser.add_argument('--times', type=int, default=10, metavar='T', 
                         help='Times of sampling')                        
     # *训练&测试相关参数 
     parser.add_argument('--model-name', type=str, default='Net1', 
                         help='Model used for training (default:Net1)')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N', 
+    parser.add_argument('--batch-size', type=int, default=128, metavar='N', 
                         help='Batch size used for training (defaule:64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N', 
                         help='Batch size used for training (defaule:64)')

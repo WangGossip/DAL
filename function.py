@@ -125,25 +125,23 @@ def draw_tracc(args, fig_name='tr_acc.png'):
 # -横坐标:采样次数；纵坐标：样本比例数目、不同样本对应的标签
 # -需要的数据：颜色列表、样本标签名称、所有的数据
 # ~plt.bar需要的参数包括bottom，是一个累加的过程
-def draw_samples_prop(args, fig_name='samples_prop.png'):
+def draw_samples_prop(args, data_count, labels_name, fig_name):
     # 参数处理
-    # save_path = os.path.join(args.out_path, fig_name)
+    save_path = os.path.join(args.out_path, fig_name)
+    colors_list = ['red','orange','yellow','green','cyan','blue','purple','pink','magenta','brown']
+    sample_times = args.times + 1   #采样次数，从0开始直到最高
     # 获取数据
-
+    # 需要的数据形式：每一类是一个列表，先类后次；实际的形式：先按次数排列；因此做一次转置
+    data_use = np.array(data_count).T
+    # x_time_fig = np.arange(sample_times + 1)
+    # labels_n = len(labels_name)
+    tmp_bottom = np.zeros(sample_times)
     # 画图
     plt.figure()
-    labels = ['Jack','Rose','Jimmy']
-    year_2019=np.arange(1,4)
-    year_2020=np.arange(1,4)+1
-    bar_width=0.4
-
-    data=[[1000,1500,1002], [2000,1300,1050], [800,800,1010]]
-    tmp_bottom = np.zeros(3)
-    data = np.array(data)
-    colors = ['#B5495B','#2ca02c', '#DA70D6']
-    labels_d = ['hat', 'pants', 'jack']
-    for list, color, label in zip(data, colors, labels_d):
-        plt.bar(np.arange(len(labels)),
+    bar_width=0.2
+    # print(len(data_use), len(labels_name))
+    for list, color, label in zip(data_use, colors_list, labels_name):
+        plt.bar(np.arange(sample_times),
                 list,
                 color = color,
                 width=bar_width,
@@ -152,6 +150,7 @@ def draw_samples_prop(args, fig_name='samples_prop.png'):
         )
         tmp_bottom = np.array([i+j for i,j in zip(tmp_bottom, list)])
 
-    plt.xticks(np.arange(0, 3, step=1),labels,rotation=45)#定义柱子名称
+    plt.xticks(np.arange(sample_times))#定义柱子名称
     plt.legend(loc=2)#图例在左边
-    plt.savefig(fig_name)
+    plt.title(fig_name[:-4])
+    plt.savefig(save_path)
