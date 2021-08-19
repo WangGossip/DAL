@@ -13,7 +13,7 @@ def get_mnist_prop(idxs, labels, len, count_class):
         count_lbs[labels[idxs[i]]] += 1
     for i in range(0,count_class):
         prop_lbs[i] = count_lbs[i]/len
-    return prop_lbs
+    return prop_lbs, count_lbs
 
 
 # *路径相关函数
@@ -154,3 +154,33 @@ def draw_samples_prop(args, data_count, labels_name, fig_name):
     plt.legend(loc=2)#图例在左边
     plt.title(fig_name[:-4])
     plt.savefig(save_path)
+
+# *初始样本选择策略
+# -功能：根据比例选取初始样本
+# -输入：idxs_tmp，n_init_pool, Y
+# -超参数：限制比例以及对应的限制类别
+def get_init_samples(args, idxs_tmp, n_init_pool, Y):
+    method_init = args.method_init
+    idxs_use = []
+    n_limit = n_init_pool // 20
+    class_limit = 1
+    if method_init == 'RS':
+        idxs_use = idxs_tmp[:n_init_pool]
+    elif method_init == 'UB1':
+        count_sampled = 0
+        count_limit = 0
+        id_use = 0
+        print('n_limit is {}'.format(n_limit))
+
+        while count_sampled < n_init_pool:
+            if Y[idxs_tmp[id_use]] == class_limit:
+                if count_limit < n_limit:
+                    count_limit += 1
+                else:
+                    id_use += 1
+                    continue
+            idxs_use.append(idxs_tmp[id_use])
+            id_use += 1
+            count_sampled += 1
+
+    return idxs_use

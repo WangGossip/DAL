@@ -8,7 +8,7 @@ from torch.utils.data.dataset import Dataset
 # *个人编写文件库
 import arguments
 from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling
-from function import get_mnist_prop, get_results_dir, draw_tracc, draw_samples_prop
+from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop
 from tools import Timer, csv_results, label_count
 
 from torchvision import transforms
@@ -122,11 +122,18 @@ def main(args):
     log_run.logger.info('本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；总预算为：{}；单次采样标记数目为：{}'.format(n_pool,n_init_pool,n_budget,n_lb_once))
     
     # 初始化标记集合
-    # todo 修改，初始筛选策略
+    #~ todo 修改，初始筛选策略
     idxs_lb = np.zeros(n_pool, dtype=bool) 
     idxs_tmp = np.arange(n_pool)
     np.random.shuffle(idxs_tmp)
-    idxs_lb[idxs_tmp[:n_init_pool]]=True
+    smp_idxs = get_init_samples(args, idxs_tmp, n_init_pool, Y_tr)
+    idxs_lb[smp_idxs]=True
+    # #test
+    # props, count_lbs = get_mnist_prop(smp_idxs, Y_tr, n_init_pool, count_class)
+    # print(props, count_lbs, len(smp_idxs))
+    # return
+    # #test
+    # idxs_lb[idxs_tmp[:n_init_pool]]=True
 
     # 加载网络模型等
     handler = get_handler(DATA_NAME)
@@ -157,8 +164,8 @@ def main(args):
     n_budget_used += n_init_pool
     strategy.train()
     acc_tmp = strategy.predict(X_te, Y_te)
-    # todo 加一个类，改写函数、保存比例
-    labels_count.write_sampling_once(idxs_tmp[:n_init_pool], Y_tr, rd)
+    #~ todo 加一个类，改写函数、保存比例
+    labels_count.write_sampling_once(smp_idxs, Y_tr, rd)
     tmp_props, tmp_total_props, tmp_count, tmp_total_count = labels_count.get_count(rd)
     log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
     samples_props = [] #用于记录每次采样时各个种类的样本比例
