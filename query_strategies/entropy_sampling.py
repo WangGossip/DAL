@@ -3,8 +3,8 @@ import torch
 from .strategy import Strategy
 # *熵策略
 class EntropySampling(Strategy):
-    def __init__(self, X, Y, idxs_lb, net, handler, args, args_add, log, device):
-        super(EntropySampling, self).__init__(X, Y, idxs_lb, net, handler, args, args_add, log, device)
+    def __init__(self, X, Y, idxs_lb, net, handler, args, device):
+        super(EntropySampling, self).__init__(X, Y, idxs_lb, net, handler, args, device)
     
     def query(self, n):
         idxs_unlabeled = np.arange(self.n_pool)[~self.idxs_lb]

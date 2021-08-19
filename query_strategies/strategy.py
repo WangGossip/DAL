@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import time
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -30,6 +31,7 @@ class Strategy:
         self.idxs_lb = idxs_lb
 
     def _train(self, epoch, loader_tr, optimizer):
+
         self.model.train()
         # *每次要取得样本、标签、对应的id
         for batch_idx, (x, y, idxs) in enumerate(loader_tr):
@@ -42,8 +44,8 @@ class Strategy:
             #  逐步记录训练的结果，包括loss、epoch等
             if batch_idx % self.args.log_interval == 0:
                 tmp_time = self.T.stop()
-                self.log.logger.debug('epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, time is {:.4f}'.format(
-                    epoch, batch_idx * len(x), len(loader_tr.dataset), 
+                self.log.logger.debug('round: {}, epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, time is {:.4f} s'.format(
+                    self.args.sampling_time, epoch, batch_idx * len(x), len(loader_tr.dataset), 
                     100. * batch_idx / len(loader_tr), loss.item(),tmp_time
                 ))
                 self.args.csv_record_trloss.write_data([self.args.sampling_time, epoch, batch_idx, loss.item()])
@@ -51,7 +53,7 @@ class Strategy:
 
     def train(self):
         # csv_record_trloss = self.args.csv_record_trloss
-
+        time_start = time.time()
         n_epoch = self.args.epochs
         self.model = self.net().to(self.device)
         optimizer = optim.Adadelta(self.model.parameters(), lr=self.args.lr)
@@ -66,6 +68,10 @@ class Strategy:
         for epoch in range(1, n_epoch+1):
             self._train(epoch, loader_tr, optimizer)
 
+        time_train_epoch = time.time() - time_start
+        self.log.logger.debug('此次训练用时：{:.4f} s'.format(time_train_epoch))
+
+
     def predict(self, X, Y):
         self.T.start()
 
@@ -77,7 +83,7 @@ class Strategy:
         self.model.eval()
         test_loss = 0
         correct = 0
-        pred_te = torch.zeros(len(Y), dtype=Y.dtype)
+        # pred_te = torch.zeros(len(Y), dtype=Y.dtype)
         with torch.no_grad():
             for x, y, idxs in loader_te:
                 x, y = x.to(self.device), y.to(self.device)
@@ -86,15 +92,15 @@ class Strategy:
                 # pred = out.max(1)[1]
                 pred = out.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
                 correct += pred.eq(y.view_as(pred)).sum().item()
-                pred_te[idxs] = pred.cpu()
+                # pred_te[idxs] = pred.cpu()
 
         test_loss /= len_testdata
         acc = correct / len_testdata
     
         tmp_time = self.T.stop()
         self.log.logger.info('采样次数：{}, 平均loss为：{:.4f}, 准确率为：{}/{}({:.2f}%), 预测用时：{}s'.
-                            format(self.args.rd, test_loss, correct, len_testdata, 100*acc, tmp_time))
-        self.args.csv_record_tracc.write_data([self.args.rd, self.args.n_budget_used, acc, test_loss])
+                            format(self.args.sampling_time, test_loss, correct, len_testdata, 100*acc, tmp_time))
+        self.args.csv_record_tracc.write_data([self.args.sampling_time, self.args.n_budget_used, acc, test_loss])
         return  acc
 
     def save_results(self, file_results):

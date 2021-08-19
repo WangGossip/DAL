@@ -102,8 +102,8 @@ def draw_tracc(args, fig_name='tr_acc.png'):
     te_acc = []
     te_loss = []
     for row in csv_reader:
-        count_sample.append(int(row[0]))
-        te_loss.append(float(row[1]))
+        count_sample.append(int(row[1]))
+        te_loss.append(float(row[3]))
         te_acc.append(float(row[2]))
     f.close()
     # 画图部分
@@ -121,3 +121,37 @@ def draw_tracc(args, fig_name='tr_acc.png'):
     plt.savefig(save_path)
 
 # todo 展示每一次变化的比例
+# *样本比例条形图
+# -横坐标:采样次数；纵坐标：样本比例数目、不同样本对应的标签
+# -需要的数据：颜色列表、样本标签名称、所有的数据
+# ~plt.bar需要的参数包括bottom，是一个累加的过程
+def draw_samples_prop(args, fig_name='samples_prop.png'):
+    # 参数处理
+    # save_path = os.path.join(args.out_path, fig_name)
+    # 获取数据
+
+    # 画图
+    plt.figure()
+    labels = ['Jack','Rose','Jimmy']
+    year_2019=np.arange(1,4)
+    year_2020=np.arange(1,4)+1
+    bar_width=0.4
+
+    data=[[1000,1500,1002], [2000,1300,1050], [800,800,1010]]
+    tmp_bottom = np.zeros(3)
+    data = np.array(data)
+    colors = ['#B5495B','#2ca02c', '#DA70D6']
+    labels_d = ['hat', 'pants', 'jack']
+    for list, color, label in zip(data, colors, labels_d):
+        plt.bar(np.arange(len(labels)),
+                list,
+                color = color,
+                width=bar_width,
+                bottom=tmp_bottom,
+                label=label
+        )
+        tmp_bottom = np.array([i+j for i,j in zip(tmp_bottom, list)])
+
+    plt.xticks(np.arange(0, 3, step=1),labels,rotation=45)#定义柱子名称
+    plt.legend(loc=2)#图例在左边
+    plt.savefig(fig_name)

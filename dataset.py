@@ -10,6 +10,9 @@ def get_dataset(name, data_path):
     if name == 'MNIST' :
         raw_tr = datasets.MNIST(data_path, train=True, download=False)
         raw_te = datasets.MNIST(data_path, train=False, download=False)
+    elif name == 'FashionMNIST':
+        raw_tr = datasets.FashionMNIST(data_path, train=True, download=False)
+        raw_te = datasets.FashionMNIST(data_path, train=False, download=False)
     X_tr = raw_tr.data
     Y_tr = raw_tr.targets
     X_te = raw_te.data

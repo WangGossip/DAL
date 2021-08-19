@@ -3,8 +3,8 @@ import torch
 from .strategy import Strategy
 # *改进的熵策略想法
 class EntropySamplingThr(Strategy):
-    def __init__(self, X, Y, idxs_lb, net, handler, args, args_add, log, device):
-        super(EntropySamplingThr, self).__init__(X, Y, idxs_lb, net, handler, args, args_add, log, device)
+    def __init__(self, X, Y, idxs_lb, net, handler, args, device):
+        super(EntropySamplingThr, self).__init__(X, Y, idxs_lb, net, handler, args, device)
     
     def query(self, n):
         idxs_unlabeled = np.arange(self.n_pool)[~self.idxs_lb]

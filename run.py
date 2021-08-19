@@ -8,7 +8,7 @@ from torch.utils.data.dataset import Dataset
 # *个人编写文件库
 import arguments
 from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling
-from function import get_mnist_prop, get_results_dir, draw_tracc
+from function import get_mnist_prop, get_results_dir, draw_tracc, draw_samples_prop
 from tools import Timer, csv_results, label_count
 
 from torchvision import transforms
@@ -26,6 +26,7 @@ from function_test import ano_log
 
 def main(args):
     # *参数处理部分, 这里也计时，也可以用timer
+    time_start = time.time()
     T = Timer()#程序开始时间
     args.timer = T
     # 处理存储文件夹，args.out_path代表结果输出位置
@@ -55,8 +56,8 @@ def main(args):
     torch.manual_seed(SEED)
 
     tmp_t = T.stop()
-    log_run.logger.debug('程序开始，部分基础参数处理完成，用时 {:.4f} s'.format(tmp_t))
-    log_run.logger.debug('使用数据集为：{}， 网络模型为：{}， epoch为：{}， batchsize为：{}， lr为：{}， 标注预算为：{}'.
+    log_run.logger.info('程序开始，部分基础参数处理完成，用时 {:.4f} s'.format(tmp_t))
+    log_run.logger.info('使用数据集为：{}， 网络模型为：{}， epoch为：{}， batchsize为：{}， lr为：{}， 标注预算为：{}'.
                         format(DATA_NAME, MODEL_NAME, args.epochs, args.batch_size, args.lr, args.prop_budget))
     T.start()    
     # ~关于数据集参数,更新args
@@ -100,7 +101,7 @@ def main(args):
     args.test_kwargs = test_kwargs
 
     tmp_t = T.stop()
-    log_run.logger.debug('处理transfom、cuda等参数，读取数据集，用时 {:.4f} s'.format(tmp_t))
+    log_run.logger.info('处理transfom、cuda等参数，读取数据集，用时 {:.4f} s'.format(tmp_t))
     T.start()
 
     # 数值计算部分
@@ -174,9 +175,12 @@ def main(args):
         else:
             n_lb_use = n_budget - n_budget_used
         n_budget_used += n_lb_use
+        # args赋值
+        args.sampling_time = rd
+        args.n_budget_used = n_budget_used
         smp_idxs = strategy.query(n_lb_use)
         idxs_lb[smp_idxs] = True
-        labels_count.write_sampling_once(idxs_lb[smp_idxs], Y_tr, rd)
+        labels_count.write_sampling_once(smp_idxs, Y_tr, rd)
         tmp_props, tmp_total_props = labels_count.get_count(rd)
         samples_props.append(tmp_props)
         samples_props_total.append(tmp_total_props)
@@ -210,11 +214,13 @@ def main(args):
     sta_prop[1] = args.prop_budget
     file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
     np.savez(file_results, acc=acc, sta_prop=sta_prop, samples_props=samples_props)
-    log_run.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n每次采样的数据比例为：\n{}'.format(type(strategy).__name__, SEED, acc, samples_props))
+    time_used = time.time()-time_start
+    log_run.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n每次采样的数据比例为：\n{};共计用时：{} s'.format(type(strategy).__name__, SEED, acc, samples_props, time_used))
 
 def test_args(args):
     print(args.save_results)
+    draw_samples_prop(args)
 if __name__ == '__main__':
     args = arguments.get_args()
-    main(args)
-    # test_args(args)
+    # main(args)
+    test_args(args)

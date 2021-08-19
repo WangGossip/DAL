@@ -4,3 +4,5 @@
 *.log
 *.json
 *.bak
+*.csv
+*.png

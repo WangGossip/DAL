@@ -68,7 +68,7 @@ class label_count:
     def __init__(self, sample_times, data_num, class_num=10) -> None:
         self.times = sample_times
         self.data_num = data_num
-        class_num = class_num
+        self.class_num = class_num
         self.samples_count_each = [[0 for col in range (class_num)] for row in range(sample_times)]
         self.samples_count_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
         self.samples_props_each = [[0 for col in range (class_num)] for row in range(sample_times)]
@@ -87,7 +87,7 @@ class label_count:
             count_each_tmp[labels[id]] +=1
         self.samples_count_each[sampling_time] = count_each_tmp
         for class_id in range(class_num):
-            self.samples_props_each[sampling_time][class_id] = count_each_tmp / data_num
+            self.samples_props_each[sampling_time][class_id] = count_each_tmp[class_id] / data_num
         # ~记录此时已经采样的全部样本的数量、比例
         if sampling_time == 0:
             count_sum_tmp = count_each_tmp
@@ -95,7 +95,7 @@ class label_count:
             count_sum_tmp = [self.samples_count_sum[sampling_time-1][i]+count_each_tmp[i] for i in range(class_num)]
         self.samples_count_sum[sampling_time] = count_sum_tmp
         for class_id in range(class_num):
-            self.samples_props_sum[sampling_time] = count_sum_tmp / data_num
+            self.samples_props_sum[sampling_time] = count_sum_tmp[class_id] / data_num
 
     def get_count(self, sampling_time):
-        return self.samples_props_each[sampling_time], self.samples_props_sum[sampling_time]
+        return self.samples_props_each[sampling_time], self.samples_props_sum[sampling_time], self.samples_count_each[sampling_time], self.samples_count_sum[sampling_time]
