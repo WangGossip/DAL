@@ -17,6 +17,7 @@ class BMAL(Strategy):
         delta = 0.1
         p = 1
         len_lbd = len(idxs_lb)
+        len_X = len(X)
         size_total = len_lbd + n #这是最终矩阵中应有的大小
         size_fig = X[0].numel()
         # -其余数据处理
@@ -29,15 +30,17 @@ class BMAL(Strategy):
         V = probs_sorted[:, 0] - probs_sorted[:,1] #计算每个样本的效用度，此时U是一个一维数组，代表第i个样本的效用度
         V_score = torch.tensor([max(delta, 1-t) for t in V])
         # *计算冗余度
-        # -计算所有样本之间的相似度
-        Martix_sim = torch.zeros(size_total, size_total)
-        for i in range(size_total):
-            for j in range(size_total):
+        # -计算所有样本之间的相似度，不管是否被标记过
+        Martix_sim = torch.zeros(len_X, len_X)
+        for i in range(len_X):
+            for j in range(len_X):
                 if i == j :
                     Martix_sim[i][j] = torch.tensor(0)
-                else:
+                elif i < j:
                     # 计算两图片之间的冗余度，先转换成一维向量
                     Martix_sim[i][j] = torch.cosine_similarity(X[i].reshape(size_fig), X[j].reshape(size_fig), dim=0)
+                else:
+                    Martix_sim[i][j] = Martix_sim[j][i]
 
         # -使用余弦相似度计算现有的冗余矩阵
         Martix_redundancy = torch.zeros(size_total, size_total)
@@ -46,20 +49,19 @@ class BMAL(Strategy):
                 # i、j计数用，代表的是标记集合中的下标，还要在idxs_labeled中取真实下标
                 Martix_redundancy[i][j]=p*V_score[idxs_labeled[i]]*Martix_sim[idxs_labeled[i]][idxs_labeled[j]]
         # -当前的分数U
-        U_score = V_score[idxs_lb].sum()
-        U_score_tmp = U_score
         # -贪婪寻找最优的解法
         idxs_Q_max = []
-        for id_candidate in range(n):
-            Q_score_max = 0
+        for _ in range(n):
             idxs_labeled = np.arange(n_pool)[idxs_lb]
             idxs_unlabeled = np.arange(n_pool)[~idxs_lb]
+            U_score = V_score[idxs_lb].sum()
             id_max_tmp = idxs_unlabeled[0]
             len_labeled = len(idxs_lb)
+            Q_score_max = 0
+            
             # -遍历未标记池
             for sample_id in idxs_unlabeled:
                 M_tmp = Martix_redundancy
-                sample_tmp = X[sample_id]
                 # -计算此时的分数U
                 U_score_tmp = U_score + V_score[sample_id]
                 # -计算此时的冗余矩阵分数R
@@ -67,13 +69,12 @@ class BMAL(Strategy):
                 for i in range(len_labeled):
                     M_tmp[len_labeled][i] = p * V_score[sample_id] * Martix_sim[sample_id][idxs_labeled[i]]
                     M_tmp[i][len_labeled] = p * V_score[idxs_labeled[i]] * Martix_sim[idxs_labeled[i]][sample_id]
-                R_score = M_tmp.norm()
-                Q_score_tmp = U_score_tmp - R_score
+                R_score_tmp = M_tmp.norm()
+                Q_score_tmp = U_score_tmp - R_score_tmp
                 # -判断是否更新当前选择
                 if Q_score_tmp > Q_score_max:
                     Q_score_max = Q_score_tmp
-                    U_score = U_score_tmp
-                    id_max_tmp = id_candidate
+                    id_max_tmp = sample_id
             
             # -修改矩阵
             for i in range(len_labeled):
