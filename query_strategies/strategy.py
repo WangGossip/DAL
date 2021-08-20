@@ -121,6 +121,22 @@ class Strategy:
         
         return probs
 
+    def predict_prob_bmal(self, X, Y):
+        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+                            shuffle=False, **self.test_kwargs)
+
+        self.model.eval()
+        probs = torch.zeros([len(Y), len(np.unique(Y))])
+        hide_z = torch.zeros(len(Y))
+        with torch.no_grad():
+            for x, y, idxs in loader_te:
+                x, y = x.to(self.device), y.to(self.device)
+                out, e1 = self.model(x)
+                prob = F.softmax(out, dim=1)
+                probs[idxs] = prob.cpu()
+                hide_z[idxs] = e1
+        return probs, e1
+
     def predict_prob_dropout(self, X, Y, n_drop):
         loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
                             shuffle=False, **self.test_kwargs)
