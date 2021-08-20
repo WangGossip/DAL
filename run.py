@@ -7,7 +7,7 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, bmal
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop
 from tools import Timer, csv_results, label_count
 
@@ -152,6 +152,8 @@ def main(args):
         strategy = EntropySamplingThr(X_tr, Y_tr, idxs_lb, net, handler, args, device)
     elif args.method == 'EMS':
         strategy = Entropy_Multi_Sampling(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+    elif args.method == 'BMAL':
+        strategy = BMAL(X_tr, Y_tr, idxs_lb, net, handler, args, device)
 
     # *训练开始
     log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
