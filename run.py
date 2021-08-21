@@ -246,7 +246,7 @@ def main(args):
     file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
     np.savez(file_results, acc=acc, sta_prop=sta_prop, samples_props=samples_props)
     time_used = time.time()-time_start
-    log_run.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n每次采样的数据比例为：\n{};共计用时：{} s'.format(type(strategy).__name__, SEED, acc, samples_props, time_used))
+    log_run.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n最终采样的数据比例为：\n{};共计用时：{} s'.format(type(strategy).__name__, SEED, acc, tmp_total_props, time_used))
 
 def test_args(args):
     print(args.save_results)
