@@ -127,15 +127,16 @@ class Strategy:
 
         self.model.eval()
         probs = torch.zeros([len(Y), len(np.unique(Y))])
-        hide_z = torch.zeros(len(Y))
+        # todo 这里的变量参数有待研究
+        hide_z = torch.zeros([len(Y), 128])
         with torch.no_grad():
             for x, y, idxs in loader_te:
                 x, y = x.to(self.device), y.to(self.device)
                 out, e1 = self.model(x)
                 prob = F.softmax(out, dim=1)
                 probs[idxs] = prob.cpu()
-                hide_z[idxs] = e1
-        return probs, e1
+                hide_z[idxs] = e1.cpu()
+        return probs, hide_z
 
     def predict_prob_dropout(self, X, Y, n_drop):
         loader_te = DataLoader(self.handler(X, Y, transform=self.transform),

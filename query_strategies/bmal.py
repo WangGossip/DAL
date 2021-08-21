@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import time
 from .strategy import Strategy
 # *BMAL方法，贪婪求效用度-冗余度最大的样本
 class BMAL(Strategy):
@@ -10,10 +11,15 @@ class BMAL(Strategy):
     # -需要得到每个样本的完整计算概率；以及对应的潜变量；选取n个样本
     def query(self, n):
         # -一些常量
-        X = self.X#训练集数据，tensor
+        X = self.X.to(self.device)#训练集数据，tensor
         # ~idxs_lb是一个bool数组，记录每一个样本点状态（是否被标记）
         idxs_lb = self.idxs_lb
         n_pool = self.n_pool
+        log_run = self.args.log_run
+        T = self.args.timer
+        T.start()
+        time_start = time.time()
+
         delta = 0.1
         p = 1
         len_lbd = len(idxs_lb)
@@ -29,19 +35,31 @@ class BMAL(Strategy):
         # *先计算效用分数，max(δ,1-(c1-c2))
         V = probs_sorted[:, 0] - probs_sorted[:,1] #计算每个样本的效用度，此时U是一个一维数组，代表第i个样本的效用度
         V_score = torch.tensor([max(delta, 1-t) for t in V])
+
+        tmp_time = T.stop()
+        log_run.logger.debug('采样测试部分结束，用时 {:.4f} s'.format(tmp_time))
+
         # *计算冗余度
         # -计算所有样本之间的相似度，不管是否被标记过
-        Martix_sim = torch.zeros(len_X, len_X)
-        for i in range(len_X):
-            for j in range(len_X):
-                if i == j :
-                    Martix_sim[i][j] = torch.tensor(0)
-                elif i < j:
-                    # 计算两图片之间的冗余度，先转换成一维向量
-                    Martix_sim[i][j] = torch.cosine_similarity(X[i].reshape(size_fig), X[j].reshape(size_fig), dim=0)
-                else:
-                    Martix_sim[i][j] = Martix_sim[j][i]
+        T.start()
+        time_start2 = time.time()
+        log_run.logger.debug('计算相似度行开始')
+        Martix_sim = torch.zeros(len_X, len_X).to(self.device)
+        hide_z = hide_z.to(self.device)
 
+        for i in range(len_X):
+            for j in range(i):
+                # 计算两图片之间的冗余度，先转换成一维向量
+                # Martix_sim[i][j] = torch.cosine_similarity(X[i].to(torch.float).reshape(size_fig), X[j].to(torch.float).reshape(size_fig), dim=0)
+                Martix_sim[i][j] = torch.cosine_similarity(hide_z[i], hide_z[j], dim = 0)
+        tmp_time = T.stop()
+        log_run.logger.debug('计算相似度计算部分结束，用时 {:.4f} s'.format(tmp_time))
+
+        for i in range(len_X):
+            for j in range(i + 1, len_X):
+                Martix_sim[i][j] = Martix_sim[j][i]
+        time_use = time.time() - time_start2
+        log_run.logger.debug('计算相似度结束，用时 {:.4f} s'.format(time_use))
         # -使用余弦相似度计算现有的冗余矩阵
         Martix_redundancy = torch.zeros(size_total, size_total)
         for i in range(len_lbd):
@@ -58,7 +76,7 @@ class BMAL(Strategy):
             id_max_tmp = idxs_unlabeled[0]
             len_labeled = len(idxs_lb)
             Q_score_max = 0
-            
+
             # -遍历未标记池
             for sample_id in idxs_unlabeled:
                 M_tmp = Martix_redundancy
@@ -84,4 +102,6 @@ class BMAL(Strategy):
             idxs_Q_max.append(id_max_tmp)
             idxs_lb[id_max_tmp] = True
 
+        time_use = time.time()-time_start
+        log_run.logger.info('本次BMAL策略用时：{:.4f} s'.format(time_use))
         return idxs_Q_max
