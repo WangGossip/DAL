@@ -11,7 +11,7 @@ def get_args():
     parser.add_argument('--data-path', type=str, default='./../../datasets', 
                         help='Path to where the data is')
     # *AL采样相关参数
-    parser.add_argument('--method', type=str, default='RS', 
+    parser.add_argument('--method', type=str, default='BMAL', 
                         help='strategy used for sampling')
     parser.add_argument('--method-init', type=str, default='RS', 
                         help='strategy used for initialization sampling')                        
