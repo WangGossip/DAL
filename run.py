@@ -7,7 +7,7 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop
 from tools import Timer, csv_results, label_count
 
@@ -95,10 +95,10 @@ def main(args):
 
     # *读取数据集
     X_tr, Y_tr, X_te, Y_te = get_dataset(DATA_NAME, args.data_path)
-    # # test
+    # test
     # make_martix(args,X_tr, device)
     # return
-    # # test结束
+    # test结束
     # 训练、测试参数
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
@@ -160,6 +160,9 @@ def main(args):
         strategy = BMAL(X_tr, Y_tr, idxs_lb, net, handler, args, device)
     elif args.method == 'BMALS':
         strategy = BMALSampling(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+    elif args.method == 'DRAL':
+        strategy = DRAL(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        
     # *训练开始
     log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
     # 一些参数，用于计数 首先初始化
