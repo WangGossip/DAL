@@ -50,7 +50,7 @@ class DRAL(Strategy):
         # *计算相似矩阵，使用余弦距离表示冗余，0.5M+0.5为冗余矩阵，范围[0,1]
         # 仅计算候选集合中的部分样本
         T.start()
-        time_start2 = time.time()
+        # time_start2 = time.time()
         log_run.logger.debug('计算相似度开始')
 
         # Martix_sim = torch.zeros(len_X, len_X).to(self.device)
@@ -65,14 +65,14 @@ class DRAL(Strategy):
         # -循环0：先计算最有代表性的样本
         id_first = torch.sum(Martix_sim, dim = 0).argmax() #距离越大，两者越像，说明越接近样本中心位置
         idxs_state_choosed[id_first] = True
-        num_range = np.arange(n)
+        num_range = np.arange(bn)
         # -循环1-n，每次要寻找与当前集合最不相似的样本
         for i in range(1,n):
             # idxs_tmp_choosed = idxs_candidate[idxs_state_choosed]
             # idxs_tmo_to_choose = idxs_candidate[~idxs_state_choosed]
             # ~先计算所有未选择集中，对于当前已选择集合的距离
             idx_next_tmp = torch.sum(Martix_sim[idxs_state_choosed][:, ~idxs_state_choosed], dim = 0).argmin()
-            idx_next = num_range[~idxs_choosed][idx_next_tmp]
+            idx_next = num_range[~idxs_state_choosed][idx_next_tmp]
             idxs_state_choosed[idx_next] = True
 
         tmp_time = T.stop()
