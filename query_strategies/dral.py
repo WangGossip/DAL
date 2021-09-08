@@ -38,6 +38,7 @@ class DRAL(Strategy):
         probs, hide_z = self.predict_prob_bmal(self.X[idxs_unlabeled], self.Y[idxs_unlabeled])
         probs_sorted, idxs = probs.sort(descending=True)# 计算效用度，只需要从unlabeled集合考虑即可
         #~排序后，是二维向量；第i个向量代表第i个样本的预测结果，均属于未标记池；结果是各个类别的预测概率
+        # *先使用边缘采样
         # *先计算效用分数，max(δ,1-(c1-c2))
         V = probs_sorted[:, 0] - probs_sorted[:,1] #计算每个样本的效用度，此时U是一个一维数组，代表第i个样本的效用度
         V_score = torch.tensor([max(delta, 1-t) for t in V])
@@ -68,8 +69,6 @@ class DRAL(Strategy):
         num_range = np.arange(bn)
         # -循环1-n，每次要寻找与当前集合最不相似的样本
         for i in range(1,n):
-            # idxs_tmp_choosed = idxs_candidate[idxs_state_choosed]
-            # idxs_tmo_to_choose = idxs_candidate[~idxs_state_choosed]
             # ~先计算所有未选择集中，对于当前已选择集合的距离
             idx_next_tmp = torch.sum(Martix_sim[idxs_state_choosed][:, ~idxs_state_choosed], dim = 0).argmin()
             idx_next = num_range[~idxs_state_choosed][idx_next_tmp]
@@ -81,4 +80,4 @@ class DRAL(Strategy):
 
         time_use = time.time()-time_start
         log_run.logger.info('本次BMAL策略用时：{:.4f} s'.format(time_use))
-        return idxs_candidate[idxs_state_choosed]
+        return idxs_unlabeled[idxs_candidate[idxs_state_choosed]]
