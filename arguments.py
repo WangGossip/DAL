@@ -15,15 +15,27 @@ def get_args():
                         help='strategy used for sampling')
     parser.add_argument('--method-init', type=str, default='RS', 
                         help='strategy used for initialization sampling')                        
+    parser.add_argument('--method-seed', type=str, default='time', 
+                        help='Method to choose seed')#AL实验进行多次，每次选取不同的种子，包括'time'和'const'两种
+    parser.add_argument('--method-budget', type=str, default='prop', 
+                        help='Method of showing budget')#预算表示方法，分别是比例和数字，即'prop'和’num‘
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--prop-init', type=float, default='0.1', metavar='R', 
                         help='Proportion of sample initialization')
     parser.add_argument('--prop-budget', type=float, default='0.2', metavar='R', 
                         help='Total proportion of sample budget')
+    parser.add_argument('--budget-init', type=int, default=600,
+                        help='Budget number for initialization (default:100)')
+    parser.add_argument('--budget-once', type=int, default=100,
+                        help='Budget of sampling in one time (default:100)')
+    parser.add_argument('--acc-expected', type=float, default=0.9,
+                        help='Expected acc (default:0.9)')
     parser.add_argument('--times', type=int, default=10, metavar='T', 
                         help='Times of sampling')                        
     # *训练&测试相关参数 
+    parser.add_argument('--repeat-times', type = int, default=5, 
+                        help='Repeat times for training (default:5)')
     parser.add_argument('--model-name', type=str, default='Net1', 
                         help='Model used for training (default:Net1)')
     parser.add_argument('--batch-size', type=int, default=128, metavar='N', 

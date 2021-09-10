@@ -64,11 +64,13 @@ class Timer:  #@save
 # *计数类，用于统计每一次筛选之后各样本占比以及当次策略各样本占比
 # ~功能：记录每一次采样后比例，以及总比例
 # -需要参数：总共的采样次数；样本总数；类别总数
+# *新功能：要能每次进行一个添加操作，实际上这个长度并不是固定的
 class label_count:
     def __init__(self, sample_times, data_num, class_num=10) -> None:
         self.times = sample_times
         self.data_num = data_num
         self.class_num = class_num
+        
         self.samples_count_each = [[0 for col in range (class_num)] for row in range(sample_times)]
         self.samples_count_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
         self.samples_props_each = [[0 for col in range (class_num)] for row in range(sample_times)]
