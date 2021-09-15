@@ -70,10 +70,10 @@ class label_count:
         self.times = sample_times
         self.data_num = data_num
         self.class_num = class_num
-        self.samples_count_each = [ [0 for col in range (class_num)] ]
-        self.samples_count_sum = [ [0 for col in range (class_num)] ]
-        self.samples_props_each = [ [0 for col in range (class_num)] ]
-        self.samples_props_sum = [ [0 for col in range (class_num)] ]        
+        self.samples_count_each = []
+        self.samples_count_sum = []
+        self.samples_props_each = []
+        self.samples_props_sum = []        
         # self.samples_count_each = [[0 for col in range (class_num)] for row in range(sample_times)]
         # self.samples_count_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
         # self.samples_props_each = [[0 for col in range (class_num)] for row in range(sample_times)]
