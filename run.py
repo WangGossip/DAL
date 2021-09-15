@@ -8,7 +8,7 @@ from torch.utils.data.dataset import Dataset
 # *个人编写文件库
 import arguments
 from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL
-from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop
+from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop, get_hms_time, draw_acc_loss_all, draw_samples_prop_all
 from tools import Timer, csv_results, label_count
 
 from torchvision import transforms
@@ -20,9 +20,6 @@ from model import get_net
 # *测试区
 from function_test import ano_log, make_martix
 
-# import ptvsd
-# ptvsd.enable_attach(address = ('10.60.150.25', 3000))
-# ptvsd.wait_for_attach()
 
 def main(args):
     # *使用不同初始种子循环多次，完整框架
@@ -34,10 +31,17 @@ def main(args):
 
     # 处理存储文件夹，args.out_path代表结果输出位置
     get_results_dir(args)
-    list_train_loss_csv = []
-    list_train_acc_csv = []
-    list_train_sampling_csv = []
+    # ~三个列表存储的是每一次AL学习过程后对应类
+    list_train_loss = []
+    list_train_acc = []
+    list_train_sampling = []
 
+    # 一些后面用到的内容
+    samples_count_all = []
+    samples_count_total_all = []
+    str_train_result = []
+    times_sampling_all = []
+    n_budget_used_all = []
     # logger类
     log_run = Logger(args, level=args.log_level)
     args.log_run = log_run
@@ -51,8 +55,10 @@ def main(args):
     if method_seed == 'time':
         seed_global = int(time_start)
     elif method_seed == 'const':
-        seed_global=args.seed
+        seed_global = args.seed
+    np.random.seed(seed_global)
     seed_list = np.random.randint(1, 1000, repeat_times)
+    args.seed_list = seed_list
 
     tmp_t = T.stop()
     log_run.logger.info('程序开始，部分基础参数预处理完成，用时 {:.4f} s'.format(tmp_t))
@@ -126,12 +132,14 @@ def main(args):
         n_lb_once = args.budget_once
         n_budget = n_pool #~这种模式对预算不做限制，仅看准确率合适达标
         acc_expected = args.acc_expected
-    n_budget_used = 0
+        times = (n_budget - n_init_pool) // n_lb_once #这里没考虑上取整，已经选取了全部样本，影响忽略不计
+
     log_run.logger.info('''本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；总预算为：{}；单次采样标记数目为：{}；预期准确率为：{}'''
     .format(n_pool, n_init_pool, n_budget, n_lb_once, acc_expected))
 
 
     for repeat_id in range(repeat_times):
+        n_budget_used = 0
         repeat_round = repeat_id + 1
         time_start_round = time.time()
         # -从头进行一次AL迭代
@@ -193,14 +201,15 @@ def main(args):
         # *第一次训练
         rd = 0      # 记录循环采样次数，round
         args.sampling_time = rd
-        args.n_budget_used = n_budget_used
         n_budget_used += n_init_pool
+        args.n_budget_used = n_budget_used
+        # strategy.update(idxs_lb)
         strategy.train()
         acc_tmp = strategy.predict(X_te, Y_te)
         #~ todo 加一个类，改写函数、保存比例
         labels_count.write_sampling_once(smp_idxs, Y_tr, rd)
         tmp_props, tmp_total_props, tmp_count, tmp_total_count = labels_count.get_count(rd)
-        log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
+        log_run.logger.info('采样循环：{}， 此次循环各类别样本采样数为：{}，占总体比例为：{}'.format(rd, tmp_count, tmp_total_props))
         samples_props = [] #用于记录每次采样时各个种类的样本比例
         samples_props_total = []
         samples_count = []
@@ -217,8 +226,8 @@ def main(args):
         # ~判断迭代终止条件：达到预算，或者准确率达到预期，即不满足其中一个即可终止
         while n_budget_used < n_budget and acc_tmp < acc_expected:
             rd = rd + 1
-        # for rd in range(1, times + 1):
             # *先根据筛选策略进行抽样，修改标记
+            # ~ n_lb_use代表当前迭代要使用的预算，要考虑每次预算以及剩余
             if rd != times:
                 n_lb_use = n_lb_once
             else:
@@ -236,7 +245,7 @@ def main(args):
             samples_count.append(tmp_count)
             samples_count_total.append(tmp_total_count)
             csv_record_trsample.write_data([rd, tmp_count, tmp_total_count])        
-            log_run.logger.info('采样循环：{}， 此次循环各类别样本比例为：{}，总比例为：{}'.format(rd, tmp_props, tmp_total_props))
+            log_run.logger.info('采样循环：{}， 此次循环各类别样本采样数为：{}，占总体比例为：{}'.format(rd, tmp_count, tmp_total_props))
 
             # *oracle标记环节，并训练
             strategy.update(idxs_lb)
@@ -250,15 +259,39 @@ def main(args):
         csv_record_tracc.close()
         csv_record_trsample.close()
 
-
+        samples_count_all.append(samples_count)
+        samples_count_total_all.append(samples_count_total)
+        times_sampling_all.append(rd+1)#~记录总采样次数，初始化一次也算在内
+        n_budget_used_all.append(n_budget_used)   
+        
+        list_train_loss.append(csv_record_trloss)
+        list_train_acc.append(csv_record_tracc)
+        list_train_sampling.append(csv_record_trsample)
 
         time_use_round = time.time() - time_start_round
+        h, m, s = get_hms_time(time_use_round)
 
-    # -总体画图部分，看一个平均的准确率，然后展示一个最终的结果
+        str_train_reslut_tmp = '第{}（总共{}次）次实验结束，实验用时：{}h {}min {:.4f}s，本次实验使用种子为：{}，最终使用预算为：{}，实验预测结果为：\n{}'.format(repeat_round, repeat_times, h, m, s, SEED, n_budget_used, acc)
+        str_train_result.append(str_train_reslut_tmp)
+        log_run.logger.info(str_train_reslut_tmp)
 
+    # * 画图，展示结果部分
+    T.start()
+    # - 图1，每行展示3张图片，分别是每一次的loss、acc变化情况，横坐标是选取的样本的数量；
+    draw_acc_loss_all(args, list_train_acc, times_sampling_all)
     # -总体画图，平均的样本采样情况，然后展示最终结果
+    draw_samples_prop_all(args, samples_count_all, text_labels[DATA_NAME], times_sampling_all, 'samples_each_count.png')
+    draw_samples_prop_all(args, samples_count_total_all, text_labels[DATA_NAME], times_sampling_all, 'samples_each_total.png')
 
-
+    tmp_t = T.stop()
+    log_run.logger.info('画图用时：{:.4f} s'.format(tmp_t))
+    time_used = time.time()-time_start
+    h, m, s = get_hms_time(time_used)
+    log_run.logger.info('运行log存储路径为：{};实验结果存储路径为：{}'.format(args.log_run.filename,args.out_path))
+    log_run.logger.info('训练完成，本次使用采样方法为：{}；\n实验结果为：'.format(type(strategy).__name__))
+    for str in str_train_result:
+        log_run.logger.info(str)
+    log_run.logger.info('实验共计用时：{}h {}min {:.4f}s'.format(h, m, s))
 
 
     # #test
@@ -267,28 +300,6 @@ def main(args):
     # return
     # #test
     # idxs_lb[idxs_tmp[:n_init_pool]]=True
-
-
-
-    # *根据CSV画图
-    T.start()
-    draw_tracc(args)
-    draw_samples_prop(args, samples_count, text_labels[DATA_NAME], 'samples_each_count.png')
-    draw_samples_prop(args, samples_count_total, text_labels[DATA_NAME], 'samples_each_total.png')
-
-    tmp_t = T.stop()
-    log_run.logger.info('画图用时：{:.4f} s'.format(tmp_t))
-    log_run.logger.info('运行log存储路径为：{}\n实验结果存储路径为：{}'.format(args.log_run.filename,args.out_path))
-
-    # 存储训练结果：需要的是acc；loss不考虑，直接看日志；除此之外因为画图需要，需要各种比例；
-    # 存一下两个数据，起始比例和预算
-    sta_prop = np.zeros(2)
-    sta_prop[0] = args.prop_init
-    sta_prop[1] = args.prop_budget
-    file_results = os.path.join(args.out_path,'{}-{}-{}-SEED{}-results.npz'.format(type(strategy).__name__, DATA_NAME, args.model_name, SEED))
-
-    time_used = time.time()-time_start
-    log_run.logger.info('训练完成，本次使用采样方法为：{}；种子为{}；\n结果准确率为\n{};\n最终采样的数据比例为：\n{};共计用时：{} s'.format(type(strategy).__name__, SEED, acc, tmp_total_props, time_used))
 
 def test_args(args):
     print(args.save_results)

@@ -2,7 +2,20 @@ import numpy as np
 import time
 import os
 import csv
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+from numpy.core.defchararray import title 
+
+# *时间相关函数
+# -获取时分秒
+def get_hms_time(sec):
+    s_hour = 3600
+    s_min = 60
+    h = int(sec/s_hour)
+    m = int((sec%s_hour)/s_min)
+    s = int(sec%s_min)
+    return h, m, s
+    
+
 # *根据标记，统计样本比例
 # idxs:一个数组，里面的元素对应着这一次选取的样本下标；labels：所有的标签
 # 输入的labels是tensor向量，返回一个numpy数组
@@ -120,6 +133,71 @@ def draw_tracc(args, fig_name='tr_acc.png'):
     plt.title("Loss&ACC Result")
     plt.savefig(save_path)
 
+# *多次实验的acc结果图展示
+
+def draw_acc_loss_all(args, list_train_acc, times_sampling_all, num_col=3, fig_name='tr_result.png'):
+    fig = plt.figure(dpi=360, figsize=(48,16))
+    plt.xticks(fontsize=10)
+    te_acc_all = []
+    te_loss_all = []
+    save_path = os.path.join(args.out_path, fig_name)
+    # ~参数处理
+    repeat_times = args.repeat_times
+    n_subpic = repeat_times + 1
+    num_row = n_subpic // num_col
+    n_times_fin = min(times_sampling_all)
+
+    if n_subpic % num_col != 0:
+        num_row += 1
+    for id_sub in range(repeat_times):
+        # 读取数据
+        csv_path = list_train_acc[id_sub].csv_path
+        # 读取数据
+        f = open(csv_path, 'r')
+        csv_reader = csv.reader(f)
+        headline = next(csv_reader)
+        count_sample = []
+        te_acc = []
+        te_loss = []
+        for row in csv_reader:
+            count_sample.append(int(row[1]))
+            te_loss.append(float(row[3]))
+            te_acc.append(float(row[2]))
+        f.close()
+        te_acc_all.append(te_acc[:n_times_fin])
+        te_loss_all.append(te_loss[:n_times_fin])
+        # 创建第 i 个子图，对应实验第 i 次
+        ax_loss = fig.add_subplot(num_row, num_col, id_sub + 1)
+        ax_loss.plot(count_sample, te_loss, 'r', label='test_loss')
+        ax_loss.legend(loc=2)
+        ax_loss.set_ylabel('Loss for each sampling')
+        ax_acc = ax_loss.twinx() #~重点利用这个函数
+        ax_acc.plot(count_sample, te_acc, 'g', label='test_acc')
+        ax_acc.legend(loc=1)
+        ax_acc.set_ylabel('Acc for each sampling')
+        ax_acc.set_xlabel('Count of sampling ')        
+        ax_loss.set_title('SEED:{}'.format(args.seed_list[id_sub]))
+    #~这是最后一个子图
+    # 最后的子图熵要展示的内容 
+    n_te_acc_all = np.array(te_acc_all)
+    n_te_loss_all = np.array(te_loss_all)
+    n_te_acc_fin = np.average(n_te_acc_all, axis=0)
+    n_te_loss_fin = np.average(n_te_loss_all, axis=0)
+
+    ax_loss = fig.add_subplot(num_row, num_col, n_subpic)
+    ax_loss.plot(count_sample[:n_times_fin], n_te_loss_fin, 'r', label='test_loss')
+    ax_loss.legend(loc=2)
+    ax_loss.set_ylabel('Average loss for each sampling')
+    ax_acc = ax_loss.twinx() #~重点利用这个函数
+    ax_acc.plot(count_sample[:n_times_fin], n_te_acc_fin, 'g', label='test_acc')
+    ax_acc.legend(loc=1)
+    ax_acc.set_ylabel('Average acc for each sampling')
+    ax_acc.set_xlabel('Count of sampling ')        
+    ax_loss.set_title('Average Result')
+    plt.tight_layout()
+    plt.savefig(save_path)
+    return
+
 # todo 展示每一次变化的比例
 # *样本比例条形图
 # -横坐标:采样次数；纵坐标：样本比例数目、不同样本对应的标签
@@ -155,6 +233,67 @@ def draw_samples_prop(args, data_count, labels_name, fig_name):
     plt.title(fig_name[:-4])
     plt.savefig(save_path)
 
+def draw_samples_prop_all(args, data_count_all, labels_name, times_sampling_all, fig_name, num_col=3):
+    plt.figure(dpi=360, figsize=(24,16))
+    plt.xticks(fontsize=10)
+    save_path = os.path.join(args.out_path, fig_name)
+    # ~参数处理
+    repeat_times = args.repeat_times
+    n_subpic = repeat_times + 1
+    num_row = n_subpic // num_col
+    n_times_fin = min(times_sampling_all)
+    data_use_all = []
+    if n_subpic % num_col != 0:
+        num_row += 1
+    colors_list = ['red','orange','yellow','green','cyan','blue','purple','pink','magenta','brown']
+    for id_sub in range(repeat_times):
+        # 获取数据
+        # 需要的数据形式：每一类是一个列表，先类后次；实际当前的形式：先按次数排列；因此做一次转置
+        data_use_all.append(data_count_all[id_sub][:n_times_fin])
+        data_use = np.array(data_count_all[id_sub]).T
+        sample_times = times_sampling_all[id_sub]
+        tmp_bottom = np.zeros(sample_times)
+        # 创建第 i 个子图，对应实验第 i 次
+        plt.subplot(num_row, num_col, id_sub + 1)
+        bar_width=0.2
+        # print(len(data_use), len(labels_name))
+        for list, color, label in zip(data_use, colors_list, labels_name):
+            plt.bar(np.arange(sample_times),
+                    height = list,
+                    color = color,
+                    width = bar_width,
+                    bottom = tmp_bottom
+                    # label = label
+            )
+            tmp_bottom = np.array([i+j for i,j in zip(tmp_bottom, list)])
+
+        plt.xticks(np.arange(sample_times))#定义柱子名称
+        # plt.legend(loc=2)#图例在左边
+        plt.title(fig_name[:-4])
+
+    # - 数据处理
+    n_data_use_all = np.array(data_use_all)
+    n_data_use_all_fin = np.average(n_data_use_all, axis=0).T#取repea次的平均，并转置
+    # ~最后一个子图
+    plt.subplot(num_row, num_col, n_subpic)
+    bar_width=0.2
+    sample_times = n_times_fin
+    tmp_bottom = np.zeros(sample_times)
+    for list, color, label in zip(n_data_use_all_fin, colors_list, labels_name):
+        plt.bar(np.arange(sample_times),
+                height = list,
+                color = color,
+                width = bar_width,
+                bottom = tmp_bottom,
+                label = label
+        )
+        tmp_bottom = np.array([i+j for i,j in zip(tmp_bottom, list)])
+    plt.xticks(np.arange(sample_times))#定义柱子名称
+    plt.legend(loc=2, fontsize=8, markerscale=0.5)#图例在左边 upper left
+    plt.title(fig_name[:-4])
+
+    plt.tight_layout()
+    plt.savefig(save_path)
 # *初始样本选择策略
 # -功能：根据比例选取初始样本
 # -输入：idxs_tmp，n_init_pool, Y

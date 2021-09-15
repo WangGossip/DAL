@@ -70,34 +70,48 @@ class label_count:
         self.times = sample_times
         self.data_num = data_num
         self.class_num = class_num
-        
-        self.samples_count_each = [[0 for col in range (class_num)] for row in range(sample_times)]
-        self.samples_count_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
-        self.samples_props_each = [[0 for col in range (class_num)] for row in range(sample_times)]
-        self.samples_props_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
+        self.samples_count_each = [ [0 for col in range (class_num)] ]
+        self.samples_count_sum = [ [0 for col in range (class_num)] ]
+        self.samples_props_each = [ [0 for col in range (class_num)] ]
+        self.samples_props_sum = [ [0 for col in range (class_num)] ]        
+        # self.samples_count_each = [[0 for col in range (class_num)] for row in range(sample_times)]
+        # self.samples_count_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
+        # self.samples_props_each = [[0 for col in range (class_num)] for row in range(sample_times)]
+        # self.samples_props_sum = [[0 for col in range (class_num)] for row in range(sample_times)]
         pass
 
-    # * 当新采样了一批样本之后，各种比例的记录
+    # * 当新采样了一批样本之后，各种比例的记录，这里每次都增加，不考虑中途插入
     # 采样都是通过获取id实现，因此需要所有的标签数据
     def write_sampling_once(self, sample_idx, labels, sampling_time):
         class_num = self.class_num
         data_num = self.data_num
-        count_each_tmp = [0]*class_num
-        count_sum_tmp = [0]*class_num
+        count_each_tmp = [0] * class_num
+        count_sum_tmp = [0] * class_num
+        samples_props_each_tmp = [0] * class_num
+        samples_props_sum_tmp = [0] * class_num
         # ~记录这一次的采样各个类别的数量、比例
         for id in sample_idx:
             count_each_tmp[labels[id]] +=1
-        self.samples_count_each[sampling_time] = count_each_tmp
+            
+        self.samples_count_each.append(count_each_tmp)
+
         for class_id in range(class_num):
-            self.samples_props_each[sampling_time][class_id] = count_each_tmp[class_id] / data_num
+            samples_props_each_tmp[class_id] = count_each_tmp[class_id] / data_num
+
+        self.samples_props_each.append(samples_props_each_tmp)
+
         # ~记录此时已经采样的全部样本的数量、比例
         if sampling_time == 0:
             count_sum_tmp = count_each_tmp
         else:
             count_sum_tmp = [self.samples_count_sum[sampling_time-1][i]+count_each_tmp[i] for i in range(class_num)]
-        self.samples_count_sum[sampling_time] = count_sum_tmp
+
+        self.samples_count_sum.append(count_sum_tmp)
+
         for class_id in range(class_num):
-            self.samples_props_sum[sampling_time] = count_sum_tmp[class_id] / data_num
+            samples_props_sum_tmp = count_sum_tmp[class_id] / data_num
+
+        self.samples_props_sum.append(samples_props_sum_tmp)
 
     def get_count(self, sampling_time):
         return self.samples_props_each[sampling_time], self.samples_props_sum[sampling_time], self.samples_count_each[sampling_time], self.samples_count_sum[sampling_time]
