@@ -42,6 +42,7 @@ def main(args):
     str_train_result = []
     times_sampling_all = []
     n_budget_used_all = []
+    acc_fin_all = []
     # logger类
     log_run = Logger(args, level=args.log_level)
     args.log_run = log_run
@@ -268,6 +269,7 @@ def main(args):
         list_train_loss.append(csv_record_trloss)
         list_train_acc.append(csv_record_tracc)
         list_train_sampling.append(csv_record_trsample)
+        acc_fin_all.append(acc_tmp)
 
         time_use_round = time.time() - time_start_round
         h, m, s = get_hms_time(time_use_round)
@@ -292,7 +294,7 @@ def main(args):
     log_run.logger.info('训练完成，本次使用采样方法为：{}；\n实验结果为：'.format(type(strategy).__name__))
     for str in str_train_result:
         log_run.logger.info(str)
-    log_run.logger.info('实验最终平均预算为：{}；共计用时：{}h {}min {:.4f}s'.format(np.mean(n_budget_used_all),h, m, s))
+    log_run.logger.info('实验最终平均预算为：{}；预测平均准确率为：{}；共计用时：{}h {}min {:.4f}s'.format(np.mean(n_budget_used_all), np.mean(acc_fin_all), h, m, s))
 
 
     # #test
