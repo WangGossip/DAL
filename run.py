@@ -292,7 +292,7 @@ def main(args):
     log_run.logger.info('训练完成，本次使用采样方法为：{}；\n实验结果为：'.format(type(strategy).__name__))
     for str in str_train_result:
         log_run.logger.info(str)
-    log_run.logger.info('实验共计用时：{}h {}min {:.4f}s'.format(h, m, s))
+    log_run.logger.info('实验最终平均预算为：{}；共计用时：{}h {}min {:.4f}s'.format(np.mean(n_budget_used_all),h, m, s))
 
 
     # #test
