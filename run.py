@@ -136,9 +136,9 @@ def main(args):
         times = (n_budget - n_init_pool) // n_lb_once
         if (n_budget - n_init_pool) % n_lb_once != 0:
             times += 1 #考虑最后一次采样
-
-    log_run.logger.info('''本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；总预算为：{}；单次采样标记数目为：{}；预期准确率为：{}'''
-    .format(n_pool, n_init_pool, n_budget, n_lb_once, acc_expected))
+    method_init = args.method_init
+    log_run.logger.info('''本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；初始样本筛选方法为：{}；总预算为：{}；单次采样标记数目为：{}；预期准确率为：{}'''
+    .format(n_pool, n_init_pool, method_init, n_budget, n_lb_once, acc_expected))
 
 
     for repeat_id in range(repeat_times):

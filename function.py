@@ -305,7 +305,11 @@ def get_init_samples(args, idxs_tmp, n_init_pool, Y):
     class_limit = 1
     if method_init == 'RS':
         idxs_use = idxs_tmp[:n_init_pool]
-    elif method_init == 'UB1':
+    elif method_init[:2] == 'UB':
+        if method_init == 'UB1':
+            class_limit = 1
+        elif method_init == 'UB3':
+            class_limit = 3
         count_sampled = 0
         count_limit = 0
         id_use = 0
@@ -321,5 +325,4 @@ def get_init_samples(args, idxs_tmp, n_init_pool, Y):
             idxs_use.append(idxs_tmp[id_use])
             id_use += 1
             count_sampled += 1
-
     return idxs_use
