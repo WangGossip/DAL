@@ -128,7 +128,7 @@ class Strategy:
         self.model.eval()
         probs = torch.zeros([len(Y), len(np.unique(Y))])
         # todo 这里的变量参数有待研究
-        hide_z = torch.zeros([len(Y), 128])
+        hide_z = torch.zeros([len(Y), self.model.get_embedding_dim()])
         with torch.no_grad():
             for x, y, idxs in loader_te:
                 x, y = x.to(self.device), y.to(self.device)

@@ -7,3 +7,4 @@ from .entropy_multi_sampling import Entropy_Multi_Sampling
 from .bmal import BMAL
 from .bmal_s import BMALSampling
 from .dral import DRAL
+from .coresets import CoreSets

@@ -37,4 +37,4 @@ class Net1(nn.Module):
         return x, e1
 
     def get_embedding_dim(self):
-        return 50
+        return 128

@@ -7,7 +7,7 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop, get_hms_time, draw_acc_loss_all, draw_samples_prop_all
 from tools import Timer, csv_results, label_count
 
@@ -196,7 +196,9 @@ def main(args):
             strategy = BMALSampling(X_tr, Y_tr, idxs_lb, net, handler, args, device)
         elif args.method == 'DRAL':
             strategy = DRAL(X_tr, Y_tr, idxs_lb, net, handler, args, device)
-        
+        elif args.method == 'CoreSets':
+            strategy = CoreSets(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+            
         # *训练开始
         log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
         # 一些参数，用于计数 首先初始化
@@ -294,7 +296,7 @@ def main(args):
     log_run.logger.info('训练完成，本次使用采样方法为：{}；\n实验结果为：'.format(type(strategy).__name__))
     for str in str_train_result:
         log_run.logger.info(str)
-    log_run.logger.info('实验最终平均预算为：{}；预测平均准确率为：{}；共计用时：{}h {}min {:.4f}s'.format(np.mean(n_budget_used_all), np.mean(acc_fin_all), h, m, s))
+    log_run.logger.info('实验初始标注预算为：{}，初始采样方法为：{}；\n最终平均预算为：{}；预测平均准确率为：{}；共计用时：{}h {}min {:.4f}s'.format(n_init_pool, method_init, np.mean(n_budget_used_all), np.mean(acc_fin_all), h, m, s))
 
 
     # #test
