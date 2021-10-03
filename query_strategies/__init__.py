@@ -8,3 +8,4 @@ from .bmal import BMAL
 from .bmal_s import BMALSampling
 from .dral import DRAL
 from .coresets import CoreSets
+from .bmcoreal import BMCore
