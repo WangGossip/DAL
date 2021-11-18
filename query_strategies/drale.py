@@ -1,14 +1,15 @@
 from operator import truediv
 import numpy as np
 from numpy.lib.twodim_base import mask_indices
+from numpy.testing._private.utils import measure
 import torch
 import torch.nn.functional as F
 import time
 from .strategy import Strategy
-# *DRAL方法，贪婪求效用度-冗余度最大的样本，每次选bn再选n
-class DRAL(Strategy):
+# *DRALe方法，贪婪求效用度-冗余度最大的样本，每次选bn再选n，区别在于使用了欧式距离矩阵来表示冗余度
+class DRALE(Strategy):
     def __init__(self, X, Y, idxs_lb, net, handler, args, device):
-        super(DRAL, self).__init__(X, Y, idxs_lb, net, handler, args, device)
+        super(DRALE, self).__init__(X, Y, idxs_lb, net, handler, args, device)
 
     # 采样过程：先找到所有的未标记样本，对其预测，然后计算对应的差值
     # -需要得到每个样本的完整计算概率；以及对应的潜变量；选取n个样本
@@ -54,10 +55,14 @@ class DRAL(Strategy):
         # time_start2 = time.time()
         log_run.logger.debug('计算相似度开始')
 
-        # Martix_sim = torch.zeros(len_X, len_X).to(self.device)
+        #- 改为使用欧式距离进行计算，没有归一化
         hide_z = hide_z.to(self.device)
-        hide_z = F.normalize(hide_z)
-        Martix_sim = 0.5* hide_z.mm(hide_z.T) + 0.5
+        Martix_sim = hide_z.mm(hide_z.T)
+        sq = Martix_sim.diagonal().reshape(bn,1)
+        Martix_sim *= -2
+        Martix_sim += sq
+        Martix_sim += sq.T
+        Martix_sim = Martix_sim.sqrt()
 
         tmp_time = T.stop()
         log_run.logger.debug('计算相似度部分结束，用时 {:.4f} s'.format(tmp_time))

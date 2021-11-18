@@ -9,3 +9,5 @@ from .bmal_s import BMALSampling
 from .dral import DRAL
 from .coresets import CoreSets
 from .bmcoreal import BMCore
+from .bm_multi_coreset import BMMC
+from .drale import DRALE

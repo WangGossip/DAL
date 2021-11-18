@@ -7,7 +7,7 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop, get_hms_time, draw_acc_loss_all, draw_samples_prop_all
 from tools import Timer, csv_results, label_count
 
@@ -200,7 +200,11 @@ def main(args):
             strategy = CoreSets(X_tr, Y_tr, idxs_lb, net, handler, args, device)
         elif args.method == 'BMCore':
             strategy = BMCore(X_tr, Y_tr, idxs_lb, net, handler, args, device)
-
+        elif args.method == 'DRALE':
+            strategy = DRALE(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'BMMC':
+            strategy = BMMC(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+            
         # *训练开始
         log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
         # 一些参数，用于计数 首先初始化

@@ -8,17 +8,49 @@ from PIL import Image
 # *获取训练、测试集，根据数据集不同分别处理
 def get_dataset(name, data_path):
     if name == 'MNIST' :
-        raw_tr = datasets.MNIST(data_path, train=True, download=False)
-        raw_te = datasets.MNIST(data_path, train=False, download=False)
+        return get_MNIST()
     elif name == 'FashionMNIST':
-        raw_tr = datasets.FashionMNIST(data_path, train=True, download=False)
-        raw_te = datasets.FashionMNIST(data_path, train=False, download=False)
+        return get_FashionMNIST()
+    elif name == 'SVHN' :
+        return get_SVHN()
+    elif name == 'CIFAR10':
+        return get_CIFAR10()
+
+def get_MNIST(data_path):
+    raw_tr = datasets.MNIST(data_path, train=True, download=False)
+    raw_te = datasets.MNIST(data_path, train=False, download=False)
     X_tr = raw_tr.data
     Y_tr = raw_tr.targets
     X_te = raw_te.data
     Y_te = raw_te.targets
     return X_tr, Y_tr, X_te, Y_te
 
+def get_FashionMNIST(data_path):
+    raw_tr = datasets.FashionMNIST(data_path, train=True, download=True)
+    raw_te = datasets.FashionMNIST(data_path, train=False, download=True)
+    X_tr = raw_tr.data
+    Y_tr = raw_tr.targets
+    X_te = raw_te.data
+    Y_te = raw_te.targets
+    return X_tr, Y_tr, X_te, Y_te
+
+def get_SVHN(data_path):
+    data_tr = datasets.SVHN(data_path, split='train', download=True)
+    data_te = datasets.SVHN(data_path, split='test', download=True)
+    X_tr = data_tr.data
+    Y_tr = torch.from_numpy(data_tr.labels)
+    X_te = data_te.data
+    Y_te = torch.from_numpy(data_te.labels)
+    return X_tr, Y_tr, X_te, Y_te
+
+def get_CIFAR10(data_path):
+    data_tr = datasets.CIFAR10(data_path, train=True, download=True)
+    data_te = datasets.CIFAR10(data_path, train=False, download=True)
+    X_tr = torch.tensor(data_tr.data)
+    Y_tr = np.array(data_tr.targets)
+    X_te = data_te.test_data
+    Y_te = torch.from_numpy(np.array(data_te.test_labels))
+    return X_tr, Y_tr, X_te, Y_te
 
 # *重载data类，编写合适的dataloader
 def get_handler(name):
