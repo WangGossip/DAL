@@ -46,7 +46,8 @@ def main(args):
     times_sampling_all = []
     n_budget_used_all = []
     acc_fin_all = []
-
+    acc_fin = []
+    acc_rep_fin = []
     # 部分会常用的变量
     DATA_NAME = args.dataset
 
@@ -348,6 +349,10 @@ def main(args):
             # *测试结果
             acc_tmp = strategy.predict(X_te, Y_te)
             acc.append(acc_tmp)
+        # todo 计算当前标注集的代表性
+        idxs_untrain = np.arange(n_pool)[~idxs_lb]
+        acc_rep_tmp = strategy.predict(X_tr[idxs_untrain], Y_tr[idxs_untrain])
+        acc_rep_fin.append(acc_rep_tmp)
 
         csv_record_trloss.close()
         csv_record_tracc.close()
@@ -378,6 +383,16 @@ def main(args):
     draw_samples_prop_all(args, samples_count_all, text_labels[DATA_NAME], times_sampling_all, 'samples_each_count.png')
     draw_samples_prop_all(args, samples_count_total_all, text_labels[DATA_NAME], times_sampling_all, 'samples_each_total.png')
 
+    #* 处理数据，得到部分最终结果
+    n_times_fin = min(times_sampling_all)
+
+
+    for _ in range(repeat_times):
+        acc_fin.append(acc[:n_times_fin])
+        # * acc_rep_fin.append()?
+    acc_fin = np.array(acc_fin)
+    acc_avg_fin = np.average(acc_fin, axis=0)
+
     tmp_t = T.stop()
     log_run.logger.info('画图用时：{:.4f} s'.format(tmp_t))
     time_used = time.time()-time_start
@@ -386,7 +401,7 @@ def main(args):
     log_run.logger.info('训练完成，本次使用采样方法为：{}；\n实验结果为：'.format(type(strategy).__name__))
     for str in str_train_result:
         log_run.logger.info(str)
-    log_run.logger.info('实验初始标注预算为：{}，初始采样方法为：{}；\n最终平均预算为：{}；预测平均准确率为：{}；共计用时：{}h {}min {:.4f}s'.format(n_init_pool, method_init, np.mean(n_budget_used_all), np.mean(acc_fin_all), h, m, s))
+    log_run.logger.info('实验初始标注预算为：{}，初始采样方法为：{}；单次采样预算为：{}；\n最低采样次数为：{}；最终平均预算为：{}；预测平均准确率为：{}；在剩余训练集上平均精度为：{}\n平均预测结果为：{}；\n共计用时：{}h {}min {:.4f}s'.format(n_init_pool, method_init, n_lb_once, n_times_fin, np.mean(n_budget_used_all), np.mean(acc_fin_all), np.mean(acc_rep_fin), acc_avg_fin, h, m, s))
 
 
     # #test
