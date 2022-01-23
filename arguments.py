@@ -45,11 +45,23 @@ def get_args():
     parser.add_argument('--epochs', type=int, default=20, metavar='N',
                         help='Number of epochs for training (default: 20)')
     parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
-                        help='Learning rate (default: 1.0)')         
+                        help='Learning rate (default: 1.0)')
     parser.add_argument('--gamma', type=float, default=0.7, metavar='M',
                         help='Learning rate step gamma (default: 0.7)') 
     parser.add_argument('--dry-run', action='store_true', default=False,
-                        help='Quickly check a single pass')       
+                        help='Quickly check a single pass')
+    parser.add_argument('--no-argsd', action='store_true',
+                        help='If use default args for datasets' )
+    parser.add_argument('--no-sch', action='store_true', 
+                        help='If to use a scheduler')
+    parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
+                        help='Learning momentum (default: 0.9)') 
+    parser.add_argument('--opt', type=str, default='sgd', metavar='S',
+                        help='Optimizer used for training (default:sgd)')
+    parser.add_argument('--sch', type=str, default='cos', metavar='S', 
+                        help='Scheduler used for training and optimizer(default:CosineAnnealingLR)')
+    parser.add_argument('--tmax', type=int, default=80, metavar='N',
+                        help='T_max in cos scheduler'    )                        
     # *日志、模型存储相关参数
     parser.add_argument('--logs-path', type=str, default='./logs',
                         help='Path to save logs')

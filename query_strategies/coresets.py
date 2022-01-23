@@ -4,6 +4,7 @@ import time
 from .strategy import Strategy
 # *Core-Set方法，使用K-Center-greedy，每次迭代贪婪找k个最远
 # !做不了，运算量还是太大
+# ~修改：改为多次迭代，时间换空间
 class CoreSets(Strategy):
     def __init__(self, X, Y, idxs_lb, net, handler, args, device):
         super(CoreSets, self).__init__(X, Y, idxs_lb, net, handler, args, device)
@@ -22,6 +23,13 @@ class CoreSets(Strategy):
         tmp_time = T.stop()
         log_run.logger.debug('获取隐藏层特征部分结束，用时 {:.4f} s'.format(tmp_time))
         T.start()
+
+        for i in range(n):
+            dist_min = 0
+            can_idx = 0
+            
+            dist_mat = np.matmul(embedding, embedding.transpose())
+
 
         # -2. 计算矩阵的l2-norm，即计算每两个样本之间的欧氏距离
         dist_mat = np.matmul(embedding, embedding.transpose())

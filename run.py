@@ -7,8 +7,9 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC, BALD, Core_Sets, CoreSets_s, BMMC_s
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop, get_hms_time, draw_acc_loss_all, draw_samples_prop_all
+from query_strategies.bmmc import BMMC_s
 from tools import Timer, csv_results, label_count
 
 from torchvision import transforms
@@ -29,8 +30,10 @@ def main(args):
     args.timer = T
     repeat_times = args.repeat_times #整体的循环次数
 
-    # 处理存储文件夹，args.out_path代表结果输出位置
-    get_results_dir(args)
+    # logger类
+    log_run = Logger(args, level=args.log_level)
+    args.log_run = log_run
+    
     # ~三个列表存储的是每一次AL学习过程后对应类
     list_train_loss = []
     list_train_acc = []
@@ -43,13 +46,40 @@ def main(args):
     times_sampling_all = []
     n_budget_used_all = []
     acc_fin_all = []
-    # logger类
-    log_run = Logger(args, level=args.log_level)
-    args.log_run = log_run
 
     # 部分会常用的变量
     DATA_NAME = args.dataset
+
+
+    # *初始的参数设置
+    use_args_default = not args.no_argsd
+    if use_args_default:
+        if DATA_NAME == 'MNIST':
+            args.model_name='Net1'
+            args.lr = 1
+            args.opt = 'adad'
+            args.epochs = 50
+            args.no_sch = True
+        elif DATA_NAME == 'FashionMNIST':
+            args.model_name='ResNetF'
+            args.lr = 0.065
+            args.opt = 'sgd'
+            args.sch = 'cos'
+            args.epochs = 50
+            args.tmax = 50
+        elif DATA_NAME == 'CIFAR10':
+            args.model_name = 'ResNet'
+            args.lr = 0.01
+            args.opt = 'sgd'
+            args.sch = 'cos'
+            args.tmax = 80
+            args.epochs = 70
+    # 处理存储文件夹，args.out_path代表结果输出位置
+    get_results_dir(args)
+
+
     MODEL_NAME = args.model_name
+
     # 随机数种子设置
     #~ 一共需要5个种子，先来一个初始种子，然后再根据这个来随机五次，作为每一次循环的种子
     method_seed = args.method_seed 
@@ -73,26 +103,60 @@ def main(args):
     text_labels = {
         'MNIST':['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
         'FashionMNIST': ['t-shirt', 'trouser', 'pullover', 'dress', 
-        'coat', 'sandal', 'shirt','sneaker', 'bag', 'ankle boot']
+        'coat', 'sandal', 'shirt','sneaker', 'bag', 'ankle boot'],
+        'CIFAR10':['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
     }
 
     # -计算一个transform的列表
-    transforms_list = {
+    transforms_test_list = {
         'MNIST':
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))],
         'FashionMNIST':
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))],
         'SVHN':
             [transforms.ToTensor(), transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))],
+        # 'CIFAR10':
+        #     [transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))]
         'CIFAR10':
-            [transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))]
+            [transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))]
+
     }
-    tmp_transform_list = transforms_list[DATA_NAME]
+    # 加入了erasing随机擦除效果会明显更好
+    transform_train_list = {
+        'MNIST':
+            [   transforms.ToTensor(), 
+                transforms.Normalize((0.1307,), (0.3081,))],
+        'FashionMNIST':
+            [   transforms.ToTensor(), 
+                transforms.RandomErasing(), 
+                transforms.RandomHorizontalFlip(), 
+                transforms.Normalize((0.1307,), (0.3081,))],
+        'SVHN':
+            [   transforms.ToTensor(), 
+                transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))],
+        'CIFAR10':
+            [   transforms.ToTensor(), 
+                transforms.RandomCrop(32, padding=4), 
+                transforms.RandomErasing(), 
+                transforms.RandomHorizontalFlip(), 
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))]
+
+    }    
+
+    tmp_transform_train_list = transform_train_list[DATA_NAME]
+    tmp_transform_test_list = transforms_test_list[DATA_NAME]    
+    # tmp_transform_list = transforms_list[DATA_NAME]
     #- VGG网络需要resize为224
     if MODEL_NAME[:3] == 'VGG':
-        tmp_transform_list.append(transforms.Resize(224))
-    transform = transforms.Compose(tmp_transform_list)
-    args.transform = transform
+        tmp_transform_train_list.append(transforms.Resize(224))
+        tmp_transform_test_list.append(transforms.Resize(224))
+    #     tmp_transform_list.append(transforms.Resize(224))
+
+    test_transform = transforms.Compose(tmp_transform_test_list)
+    train_transform=transforms.Compose(tmp_transform_train_list)
+    # transform = transforms.Compose(tmp_transform_list)
+    args.test_transform = test_transform
+    args.train_transform = train_transform
 
     # 是否使用GPU
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -122,12 +186,15 @@ def main(args):
     # -关于筛选预算，其实只需要知道：初始预算、每次筛选样本数目、最终限制的样本数目
     method_budget = args.method_budget
     n_pool = len(Y_tr)
+
+    # -给定各部分的预算比例
     if method_budget == 'prop':
         times = args.times#采样次数
         n_init_pool = int(n_pool * args.prop_init)
         n_budget = int(n_pool * args.prop_budget)
         n_lb_once = (n_budget - n_init_pool) // times
         acc_expected = 1 #~预算模式就把全部预算用满为止，不考虑acc
+    # -给定初始预算、单次采样、目标精度，不限制采样次数；
     elif method_budget == 'num':
         n_init_pool = args.budget_init
         n_lb_once = args.budget_once
@@ -136,6 +203,14 @@ def main(args):
         times = (n_budget - n_init_pool) // n_lb_once
         if (n_budget - n_init_pool) % n_lb_once != 0:
             times += 1 #考虑最后一次采样
+    # -给定各部分预算数值
+    elif method_budget == 'budget':
+        times = args.times
+        n_init_pool = args.budget_init
+        n_lb_once = args.budget_once
+        n_budget = n_init_pool + times*n_lb_once #~预算看预期采样次数
+        acc_expected = 1#~不限制预期精度，预算用完为止
+
     method_init = args.method_init
     log_run.logger.info('''本次实验中，训练集样本数为：{}；其中初始标记数目为：{}；初始样本筛选方法为：{}；总预算为：{}；单次采样标记数目为：{}；预期准确率为：{}'''
     .format(n_pool, n_init_pool, method_init, n_budget, n_lb_once, acc_expected))
@@ -176,6 +251,7 @@ def main(args):
         # 加载网络模型等
         handler = get_handler(DATA_NAME)
         net = get_net(args.model_name)
+        # net = net.to(device)
         # 筛选策略选择
         # todo 修改函数，避免多次重复
         if args.method == 'RS':
@@ -204,7 +280,15 @@ def main(args):
             strategy = DRALE(X_tr, Y_tr, idxs_lb, net, handler, args, device)
         elif args.method == 'BMMC':
             strategy = BMMC(X_tr, Y_tr, idxs_lb, net, handler, args, device)
-            
+        elif args.method == 'BALD':
+            strategy = BALD(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'Core_Sets':
+            strategy = Core_Sets(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'CoreSets_s':
+            strategy = CoreSets_s(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'BMMCS':
+            strategy = BMMC_s(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+
         # *训练开始
         log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
         # 一些参数，用于计数 首先初始化

@@ -6,3 +6,6 @@
 *.bak
 *.csv
 *.png
+results/
+logs/
+datasets/

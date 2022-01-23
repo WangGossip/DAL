@@ -11,3 +11,8 @@ from .coresets import CoreSets
 from .bmcoreal import BMCore
 from .bm_multi_coreset import BMMC
 from .drale import DRALE
+from .bald import BALD
+from .core_sets import Core_Sets
+from .coresets_solved import CoreSets_s
+from .bmmc import BMMC_s
+from .least_confidence_dropout import LeastConfidenceDropout

@@ -17,7 +17,9 @@ class Strategy:
         self.args = args
         self.T = args.timer
         self.log = args.log_run
-        self.transform = args.transform
+        # self.transform = args.transform
+        self.train_transform = args.train_transform
+        self.test_transform = args.test_transform
         self.train_kwargs = args.train_kwargs
         self.test_kwargs = args.test_kwargs
         self.n_pool = len(Y)
@@ -33,20 +35,28 @@ class Strategy:
     def _train(self, epoch, loader_tr, optimizer):
 
         self.model.train()
+        train_loss = 0
+        correct = 0
+        total = 0
         # *每次要取得样本、标签、对应的id
         for batch_idx, (x, y, idxs) in enumerate(loader_tr):
             x, y = x.to(self.device), y.to(self.device)
             optimizer.zero_grad()
-            out, e1 = self.model(x)
+            out, _ = self.model(x)
             loss = F.cross_entropy(out, y)
             loss.backward()
             optimizer.step()
+
+            train_loss += loss.item()
+            _, predicted = out.max(1)
+            total += y.size(0)
+            correct += predicted.eq(y).sum().item()
             #  逐步记录训练的结果，包括loss、epoch等
             if batch_idx % self.args.log_interval == 0:
                 tmp_time = self.T.stop()
-                self.log.logger.debug('round: {}, epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, time is {:.4f} s'.format(
-                    self.args.sampling_time, epoch, batch_idx * len(x), len(loader_tr.dataset), 
-                    100. * batch_idx / len(loader_tr), loss.item(),tmp_time
+                self.log.logger.debug('round: {}, epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, (Avg Loss: {:.4f} | Acc: {:.2f}%({}/{}))time is {:.4f} s'.format(
+                    self.args.sampling_time, epoch, total, len(loader_tr.dataset), 
+                    100. * batch_idx / len(loader_tr), loss.item(),train_loss/(batch_idx+1), 100.*correct/total,correct, total,tmp_time
                 ))
                 self.args.csv_record_trloss.write_data([self.args.sampling_time, epoch, batch_idx, loss.item()])
                 self.T.start()
@@ -55,18 +65,33 @@ class Strategy:
         # csv_record_trloss = self.args.csv_record_trloss
         time_start = time.time()
         n_epoch = self.args.epochs
-        self.model = self.net().to(self.device)
-        optimizer = optim.Adadelta(self.model.parameters(), lr=self.args.lr)
-        scheduler = StepLR(optimizer, step_size=1, gamma=self.args.gamma)
+        self.model = self.net.to(self.device)
+        # *优化器
+        if self.args.opt == 'sgd':
+            optimizer = optim.SGD(self.model.parameters(), lr = self.args.lr, momentum=self.args.momentum, weight_decay=5e-4)
+        elif self.args.opt == 'adam':
+            optimizer = optim.Adam(self.model.parameters(), lr = self.args.lr)
+        elif self.args.opt == 'adad':
+            optimizer = optim.Adadelta(self.model.parameters(), lr = self.args.lr)        
+        
+        use_sch = not self.args.no_sch
+        if self.args.sch == 'step':
+            scheduler = StepLR(optimizer, step_size=self.args.step_size, gamma=self.args.gamma)
+        elif self.args.sch == 'cos':
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.args.tmax)
+        elif self.args.sch == 'exp':
+            scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=self.args.gamma)
         # idxs_train记录所有被训练过的样本
         idxs_train = np.arange(self.n_pool)[self.idxs_lb]
         # 读取训练集
-        loader_tr = DataLoader(self.handler(self.X[idxs_train], self.Y[idxs_train], transform=self.transform),
+        loader_tr = DataLoader(self.handler(self.X[idxs_train], self.Y[idxs_train], transform=self.train_transform),
                             shuffle=True, **self.train_kwargs)
 
         self.T.start()
         for epoch in range(1, n_epoch+1):
             self._train(epoch, loader_tr, optimizer)
+            if use_sch:
+                scheduler.step()
 
         time_train_epoch = time.time() - time_start
         self.log.logger.debug('此次训练用时：{:.4f} s'.format(time_train_epoch))
@@ -76,7 +101,7 @@ class Strategy:
         self.T.start()
 
         # 读取测试集
-        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
                             shuffle=False, **self.test_kwargs)
 
         len_testdata = len(loader_te.dataset)
@@ -107,7 +132,7 @@ class Strategy:
         return
 
     def predict_prob(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
                             shuffle=False, **self.test_kwargs)
 
         self.model.eval()
@@ -122,7 +147,7 @@ class Strategy:
         return probs
 
     def predict_prob_bmal(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
                             shuffle=False, **self.test_kwargs)
 
         self.model.eval()
@@ -139,7 +164,7 @@ class Strategy:
         return probs, hide_z
 
     def predict_prob_dropout(self, X, Y, n_drop):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
                             shuffle=False, **self.test_kwargs)
 
         self.model.train()
@@ -157,23 +182,27 @@ class Strategy:
         return probs
 
     def predict_prob_dropout_split(self, X, Y, n_drop):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
                             shuffle=False, **self.test_kwargs)
-
+        time_start = time.time()
         self.model.train()
         probs = torch.zeros([n_drop, len(Y), len(np.unique(Y))])
         for i in range(n_drop):
+            self.T.start()
             print('n_drop {}/{}'.format(i+1, n_drop))
             with torch.no_grad():
                 for x, y, idxs in loader_te:
                     x, y = x.to(self.device), y.to(self.device)
                     out, e1 = self.model(x)
                     probs[i][idxs] += F.softmax(out, dim=1).cpu()
-        
+            tmp_time = self.T.stop()
+            self.log.logger.info('第{}次预测结束，用时{}s'.format(i+1, tmp_time))
+        time_use = time.time()-time_start
+        self.log.logger.info('此次预测{}次，共计用时{}s'.format(n_drop, time_use))
         return probs
 
     def get_embedding(self, X, Y):
-        loader_te = DataLoader(self.handler(X, Y, transform=self.transform),
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
                             shuffle=False, **self.test_kwargs)
 
         self.model.eval()
