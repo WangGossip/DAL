@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import time
 from .strategy import Strategy
 # *BMCore方法，贪婪求效用度-冗余度最大的样本，每次选bn再选n，这n个就用k-center-greedy的方法
+# *更新版，此时贪婪求解适用于大范围
 class BMCore(Strategy):
     def __init__(self, X, Y, idxs_lb, net, handler, args, device):
         super(BMCore, self).__init__(X, Y, idxs_lb, net, handler, args, device)
