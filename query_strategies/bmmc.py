@@ -15,8 +15,9 @@ class BMMC_s(Strategy):
     # -需要得到每个样本的完整计算概率；以及对应的潜变量；选取n个样本
     def query(self, n):
         # -一些常量
-        beta_min = 4
-        beta_max = 10
+        beta_min = self.args.beta_min
+        beta_max = self.args.beta_max
+        vote_line = self.args.vote_line #投票界限
         bn = beta_max * n #候选集数量
         device = self.device
 
@@ -105,13 +106,13 @@ class BMMC_s(Strategy):
         # -先排序，看有多少票数高于1，从第几位开始是1
         state_vote_candidate = np.zeros(bn, dtype=bool)
         sorted_vote = np.argsort(vote_candidate)
-        idxs_voted_multi = np.where(vote_candidate > 2)[0]
+        idxs_voted_multi = np.where(vote_candidate > vote_line)[0]
         len_voted_multi = len(idxs_voted_multi)
         if len_voted_multi >= n:
             # ~这是升序排列，选取最后的n个即可
             state_vote_candidate[sorted_vote[bn-n:]] = True
         else:
-            idxs_voted_one = np.where(vote_candidate == 2)[0]
+            idxs_voted_one = np.where(vote_candidate == vote_line)[0]
             len_voted_random = n - len_voted_multi
             # -票数为1的做随机选择
             idxs_tmp_one = np.random.choice(idxs_voted_one, len_voted_random, replace=False)

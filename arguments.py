@@ -61,7 +61,14 @@ def get_args():
     parser.add_argument('--sch', type=str, default='cos', metavar='S', 
                         help='Scheduler used for training and optimizer(default:CosineAnnealingLR)')
     parser.add_argument('--tmax', type=int, default=80, metavar='N',
-                        help='T_max in cos scheduler'    )                        
+                        help='T_max in cos scheduler'    )
+    # *BMMC系列方法用参数
+    parser.add_argument('--beta-min', type=int, default=4, metavar='N', 
+                        help='beta_min in BMMCs and BMCore')
+    parser.add_argument('--beta-max', type=int, default=10, metavar='N', 
+                        help='beta_max in BMMCs')
+    parser.add_argument('--vote-line', type=int, default=2, metavar='N', 
+                        help='vote_line in BMMCs')
     # *日志、模型存储相关参数
     parser.add_argument('--logs-path', type=str, default='./logs',
                         help='Path to save logs')
