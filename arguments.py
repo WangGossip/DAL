@@ -15,11 +15,11 @@ def get_args():
                         help='strategy used for sampling')
     parser.add_argument('--method-init', type=str, default='RS', 
                         help='strategy used for initialization sampling')                        
-    parser.add_argument('--method-seed', type=str, default='time', 
+    parser.add_argument('--method-seed', type=str, default='const', 
                         help='Method to choose seed')#AL实验进行多次，每次选取不同的种子，包括'time'和'const'两种
     parser.add_argument('--method-budget', type=str, default='prop', 
                         help='Method of showing budget')#预算表示方法，分别是比例和数字，即'prop'和’num‘
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
+    parser.add_argument('--seed', type=int, default=1643034835, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--prop-init', type=float, default='0.1', metavar='R', 
                         help='Proportion of sample initialization')
