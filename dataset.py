@@ -15,6 +15,8 @@ def get_dataset(name, data_path):
         return get_SVHN(data_path)
     elif name == 'CIFAR10':
         return get_CIFAR10(data_path)
+    elif name[:9] == 'CIFAR10IM':
+        return get_CIFAR10IM(name, data_path)
 
 def get_MNIST(data_path):
     raw_tr = datasets.MNIST(data_path, train=True, download=False)
@@ -50,6 +52,31 @@ def get_CIFAR10(data_path):
     Y_tr = torch.tensor(raw_tr.targets)
     X_te = raw_te.data
     Y_te = torch.tensor(raw_te.targets)
+    return X_tr, Y_tr, X_te, Y_te
+
+# *处理不平衡数据集，测试集不变
+def get_CIFAR10IM(name, data_path):
+    imb_class_counts_list = [
+        [2000, 5000, 2000, 5000, 2000, 5000, 2000, 5000, 2000, 5000],
+        [1000, 5000, 1000, 5000, 1000, 5000, 1000, 5000, 1000, 5000],
+        [500, 5000, 500, 5000, 500, 5000, 500, 5000, 500, 5000],
+        [100, 5000, 100, 5000, 100, 5000, 100, 5000, 100, 5000]
+    ]
+    id_imb = int(name[9])
+    imb_class_counts=imb_class_counts_list[id_imb]
+    raw_tr = datasets.CIFAR10(data_path, train=True, download=False)
+    raw_te = datasets.CIFAR10(data_path, train=False, download=False)
+    targets = np.array(raw_tr.targets)
+    X_te = raw_te.data
+    Y_te = torch.tensor(raw_te.targets)    
+
+    classes, class_counts = np.unique(targets, return_counts=True)
+    nb_classes = len(classes)
+    class_idxs = [np.where(targets == i)[0] for i in range(nb_classes)]
+    imb_class_idx = [class_id[:class_count] for class_id, class_count in zip(class_idxs, imb_class_counts)]
+    imb_class_idx = np.hstack(imb_class_idx)
+    X_tr = raw_tr.data[imb_class_idx]
+    Y_tr = torch.tensor(targets[imb_class_idx])
     return X_tr, Y_tr, X_te, Y_te
 
 # *重载data类，编写合适的dataloader

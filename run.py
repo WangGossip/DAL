@@ -51,25 +51,26 @@ def main(args):
     acc_rep_fin = []
     # 部分会常用的变量
     DATA_NAME = args.dataset
-
-
+    DATASET_NAME = DATA_NAME
+    if DATA_NAME[:7] == 'CIFAR10':
+        DATASET_NAME = 'CIFAR10'
     # *初始的参数设置
     use_args_default = not args.no_argsd
     if use_args_default:
-        if DATA_NAME == 'MNIST':
+        if DATASET_NAME == 'MNIST':
             args.model_name='Net1'
             args.lr = 1
             args.opt = 'adad'
             args.epochs = 50
             args.no_sch = True
-        elif DATA_NAME == 'FashionMNIST':
+        elif DATASET_NAME == 'FashionMNIST':
             args.model_name='ResNetF'
             args.lr = 0.065
             args.opt = 'sgd'
             args.sch = 'cos'
             args.epochs = 50
             args.tmax = 50
-        elif DATA_NAME == 'CIFAR10':
+        elif DATASET_NAME == 'CIFAR10':
             args.model_name = 'ResNet'
             args.lr = 0.01
             args.opt = 'sgd'
@@ -96,8 +97,8 @@ def main(args):
     tmp_t = T.stop()
     log_run.logger.info('程序开始，部分基础参数预处理完成，用时 {:.4f} s'.format(tmp_t))
     log_run.logger.info('''使用数据集为：{}， 网络模型为：{}， epoch为：{}， batchsize为：{}， lr为：{}， 标注预算为：{}，\n
-                        需进行{}次实验，随机种子列表为：{}'''.
-                        format(DATA_NAME, MODEL_NAME, args.epochs, args.batch_size, args.lr, args.prop_budget, repeat_times, seed_list))
+                        需进行{}次实验，全局种子为：{}，随机种子列表为：{}'''.
+                        format(DATA_NAME, MODEL_NAME, args.epochs, args.batch_size, args.lr, args.prop_budget, repeat_times, seed_global, seed_list))
     
     T.start()    
     # ~关于数据集参数,更新args
@@ -145,8 +146,8 @@ def main(args):
 
     }    
 
-    tmp_transform_train_list = transform_train_list[DATA_NAME]
-    tmp_transform_test_list = transforms_test_list[DATA_NAME]    
+    tmp_transform_train_list = transform_train_list[DATASET_NAME]
+    tmp_transform_test_list = transforms_test_list[DATASET_NAME]    
     # tmp_transform_list = transforms_list[DATA_NAME]
     #- VGG网络需要resize为224
     if MODEL_NAME[:3] == 'VGG':
@@ -251,7 +252,7 @@ def main(args):
         idxs_lb[smp_idxs]=True        
 
         # 加载网络模型等
-        handler = get_handler(DATA_NAME)
+        handler = get_handler(DATASET_NAME)
         net = get_net(args.model_name)
         # net = net.to(device)
         # 筛选策略选择
@@ -375,7 +376,7 @@ def main(args):
         time_use_round = time.time() - time_start_round
         h, m, s = get_hms_time(time_use_round)
 
-        str_train_reslut_tmp = '第{}（总共{}次）次实验结束，实验用时：{}h {}min {:.4f}s，本次实验使用种子为：{}，最终使用预算为：{}，实验预测结果为：\n{}'.format(repeat_round, repeat_times, h, m, s, SEED, n_budget_used, acc)
+        str_train_reslut_tmp = '第{}（总共{}次）次实验结束，实验用时：{}h {}min {:.4f}s，本次实验使用种子为：{}，最终使用预算为：{}，在剩余训练集上预测精度为：{}，实验预测结果为：\n{}'.format(repeat_round, repeat_times, h, m, s, SEED, n_budget_used, acc_rep_tmp, acc)
         str_train_result.append(str_train_reslut_tmp)
         log_run.logger.info(str_train_reslut_tmp)
 
@@ -403,7 +404,7 @@ def main(args):
     log_run.logger.info('训练完成，本次使用采样方法为：{}；\n实验结果为：'.format(type(strategy).__name__))
     for str in str_train_result:
         log_run.logger.info(str)
-    log_run.logger.info('实验初始标注预算为：{}，初始采样方法为：{}；单次采样预算为：{}；\n最低采样次数为：{}；最终平均预算为：{}；预测平均准确率为：{}；在剩余训练集上平均精度为：{}\n平均预测结果为：{}；\n共计用时：{}h {}min {:.4f}s'.format(n_init_pool, method_init, n_lb_once, n_times_fin, np.mean(n_budget_used_all), np.mean(acc_fin_all), np.mean(acc_rep_fin), acc_avg_fin.tolist(), h, m, s))
+    log_run.logger.info('实验初始种子为：{}，实验初始标注预算为：{}，初始采样方法为：{}；单次采样预算为：{}；\n最低采样次数为：{}；最终平均预算为：{}；预测平均准确率为：{}；在剩余训练集上平均精度为：{}\n平均预测结果为：{}；\n共计用时：{}h {}min {:.4f}s'.format(seed_global, n_init_pool, method_init, n_lb_once, n_times_fin, np.mean(n_budget_used_all), np.mean(acc_fin_all), np.mean(acc_rep_fin), acc_avg_fin.tolist(), h, m, s))
 
 
     # #test
