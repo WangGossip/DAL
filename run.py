@@ -385,8 +385,8 @@ def main(args):
     # - 图1，每行展示3张图片，分别是每一次的loss、acc变化情况，横坐标是选取的样本的数量；
     draw_acc_loss_all(args, list_train_acc, times_sampling_all)
     # -总体画图，平均的样本采样情况，然后展示最终结果
-    draw_samples_prop_all(args, samples_count_all, text_labels[DATA_NAME], times_sampling_all, 'samples_each_count.png')
-    draw_samples_prop_all(args, samples_count_total_all, text_labels[DATA_NAME], times_sampling_all, 'samples_each_total.png')
+    draw_samples_prop_all(args, samples_count_all, text_labels[DATASET_NAME], times_sampling_all, 'samples_each_count.png')
+    draw_samples_prop_all(args, samples_count_total_all, text_labels[DATASET_NAME], times_sampling_all, 'samples_each_total.png')
 
     #* 处理数据，得到部分最终结果
     n_times_fin = min(times_sampling_all)
