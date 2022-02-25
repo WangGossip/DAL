@@ -161,19 +161,19 @@ def use_cifar10_data():
     # *RS 
     list_cifar10_data[0].add_final_acc([0.5029, 0.6206, 0.68884, 0.73406, 0.76518, 0.7889, 0.80608, 0.8219, 0.83448, 0.84452], 0.8469)
     # *BvSB
-    list_cifar10_data[1].add_final_acc([0.50022, 0.63576, 0.72092, 0.76973, 0.80175, 0.83083, 0.84807, 0.86129, 0.8732, 0.88204], 0.9247)
+    list_cifar10_data[1].add_final_acc([0.50022, 0.63576, 0.72092, 0.76973, 0.80175, 0.83083, 0.84807, 0.86129, 0.8732, 0.88204], 0.9215)
     # *LC
-    list_cifar10_data[2].add_final_acc([0.499, 0.62908, 0.71801, 0.77023, 0.80569, 0.83288, 0.84975, 0.86268, 0.87544, 0.88283], 0.9274)
+    list_cifar10_data[2].add_final_acc([0.499, 0.62908, 0.71801, 0.77023, 0.80569, 0.83288, 0.84975, 0.86268, 0.87544, 0.88283], 0.9212)
     # *K-Center-Greedy
     list_cifar10_data[3].add_final_acc([0.50832, 0.63629, 0.71363, 0.76144, 0.79183, 0.818487, 0.83776, 0.852007, 0.863473, 0.874], 0.9022)
     # *BALD
     list_cifar10_data[4].add_final_acc([0.50192, 0.63256, 0.71126, 0.76161, 0.79227, 0.82031, 0.83865, 0.85319, 0.86548, 0.87473], 0.9045)
     # *BMMC
-    list_cifar10_data[5].add_accdata([0.4972, 0.647, 0.7301, 0.7821, 0.8048, 0.8327, 0.8513, 0.864, 0.8817, 0.8873], 0.92165)
+    list_cifar10_data[5].add_accdata([0.4972, 0.647, 0.7301, 0.7821, 0.8048, 0.8327, 0.8513, 0.864, 0.8817, 0.8873], 0.9239)
     list_cifar10_data[5].add_accdata([0.5322, 0.6612, 0.745, 0.7847, 0.8144, 0.8352, 0.8533, 0.8665, 0.8765, 0.8857], 0.9224)
-    list_cifar10_data[5].add_accdata([0.5198, 0.6653, 0.7468, 0.787, 0.812, 0.8339, 0.8524, 0.8654, 0.8782, 0.8852], 0.9201)
+    list_cifar10_data[5].add_accdata([0.5111, 0.6505, 0.7336, 0.79, 0.8164, 0.8403, 0.8562, 0.8707, 0.8795, 0.8869], 0.9241)
     list_cifar10_data[5].add_accdata([0.5197, 0.664, 0.7386, 0.7759, 0.8096, 0.8302, 0.8525, 0.8657, 0.878, 0.8853], 0.9227)
-    list_cifar10_data[5].add_accdata([0.4999, 0.6485, 0.7379, 0.7826, 0.8148, 0.844, 0.8542, 0.8724, 0.8816, 0.8852], 0.9224)
+    list_cifar10_data[5].add_accdata([0.5068, 0.6482, 0.7239, 0.7716, 0.8101, 0.8371, 0.8491, 0.8658, 0.8764, 0.8886], 0.9237)
     list_cifar10_data[5].caculate_finacc()        
     return list_cifar10_data
 
@@ -315,11 +315,11 @@ def use_fashionmnist_bm_data():
         tmp_fashionmnist_bm_data = data_train_acc(DATA_NAME, method_name, count_samples)
         list_fashionmnist_bm_data.append(tmp_fashionmnist_bm_data)    
     # *BMMC
-    list_fashionmnist_bm_data[0].add_accdata([0.6459, 0.7681, 0.8398, 0.8773, 0.8903, 0.9024, 0.9017, 0.9063, 0.9033, 0.9132], 0.9280)
-    list_fashionmnist_bm_data[0].add_accdata([0.6869, 0.7843, 0.8572, 0.8717, 0.8827, 0.8934, 0.8984, 0.9019, 0.9038, 0.9109], 0.9282)
-    list_fashionmnist_bm_data[0].add_accdata([0.6054, 0.6741, 0.8246, 0.8653, 0.8838, 0.8948, 0.9022, 0.9023, 0.9047, 0.9115], 0.9286)
-    list_fashionmnist_bm_data[0].add_accdata([0.5085, 0.687, 0.8041, 0.7797, 0.8824, 0.8957, 0.9024, 0.9074, 0.9089, 0.9127], 0.9273)
-    list_fashionmnist_bm_data[0].add_accdata([0.674, 0.7597, 0.8523, 0.8749, 0.8891, 0.8997, 0.9025, 0.9058, 0.9049, 0.9132], 0.9286)
+    list_fashionmnist_bm_data[0].add_accdata([0.4972, 0.647, 0.7301, 0.7821, 0.8048, 0.8327, 0.8513, 0.864, 0.8817, 0.8873], 0.9239)
+    list_fashionmnist_bm_data[0].add_accdata([0.5322, 0.6612, 0.745, 0.7847, 0.8144, 0.8352, 0.8533, 0.8665, 0.8765, 0.8857], 0.9224)
+    list_fashionmnist_bm_data[0].add_accdata([0.5111, 0.6505, 0.7336, 0.79, 0.8164, 0.8403, 0.8562, 0.8707, 0.8795, 0.8869], 0.9241)
+    list_fashionmnist_bm_data[0].add_accdata([0.5197, 0.664, 0.7386, 0.7759, 0.8096, 0.8302, 0.8525, 0.8657, 0.878, 0.8853], 0.9227)
+    list_fashionmnist_bm_data[0].add_accdata([0.5068, 0.6482, 0.7239, 0.7716, 0.8101, 0.8371, 0.8491, 0.8658, 0.8764, 0.8886], 0.9237)    
     list_fashionmnist_bm_data[0].caculate_finacc()        
     # *BMCore4
     list_fashionmnist_bm_data[1].add_final_acc([0.60523, 0.68833, 0.78222, 0.84648, 0.88127, 0.89294, 0.8989, 0.90392, 0.90369, 0.90963], 0.92786)
@@ -409,6 +409,5 @@ def main():
         print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
     for data in list_cifar10_bm_data:
         print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
-    
 if __name__ == '__main__':
     main()
