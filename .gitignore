@@ -6,6 +6,7 @@
 *.bak
 *.csv
 *.png
+workspace*
 results/
 logs/
 datasets/
