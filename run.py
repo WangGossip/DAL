@@ -1,3 +1,4 @@
+from ast import arg
 import numpy as np
 import torch
 import os
@@ -7,7 +8,7 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC, BALD, Core_Sets, CoreSets_s, BMMC_s
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC, BALD, Core_Sets, CoreSets_s, BMMC_s, LearningDynamicLeastConfidence, LearningDynamic
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop, get_hms_time, draw_acc_loss_all, draw_samples_prop_all
 from query_strategies.bmmc import BMMC_s
 from tools import Timer, csv_results, label_count
@@ -63,6 +64,10 @@ def main(args):
             args.opt = 'adad'
             args.epochs = 50
             args.no_sch = True
+            args.method_budget = "budget"
+            args.budget_init = 100
+            args.budget_once = 100
+            args.times = 9
         elif DATASET_NAME == 'FashionMNIST':
             args.model_name='ResNetF'
             args.lr = 0.065
@@ -293,6 +298,10 @@ def main(args):
         # BMMC最终版
         elif args.method == 'BMMCS':
             strategy = BMMC_s(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'LDAL':
+            strategy = LearningDynamic(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'LDLC':
+            strategy = LearningDynamicLeastConfidence(X_tr, Y_tr, idxs_lb, net, handler, args, device)
 
         # *训练开始
         log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))

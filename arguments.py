@@ -6,12 +6,12 @@ def get_args():
     parser.add_argument('--no-cuda', action='store_true', 
                         help='If training is to be done on a GPU')
     # *数据集相关参数
-    parser.add_argument('--dataset', type=str, default='FashionMNIST', metavar='D', 
+    parser.add_argument('--dataset', type=str, default='MNIST', metavar='D', 
                         help='Name of the dataset used.')
     parser.add_argument('--data-path', type=str, default='./../../datasets', 
                         help='Path to where the data is')
     # *AL采样相关参数
-    parser.add_argument('--method', type=str, default='BMAL', 
+    parser.add_argument('--method', type=str, default='LC', 
                         help='strategy used for sampling')
     parser.add_argument('--method-init', type=str, default='RS', 
                         help='strategy used for initialization sampling')                        
@@ -33,6 +33,10 @@ def get_args():
                         help='Expected acc (default:0.9)')
     parser.add_argument('--times', type=int, default=10, metavar='T', 
                         help='Times of sampling')                        
+
+    # *DLAL训练参数
+    parser.add_argument('--jump-epoch', type=int, default=10, metavar='N', 
+                        help="Num of epochs to jump in training")
     # *训练&测试相关参数 
     parser.add_argument('--repeat-times', type = int, default=5, 
                         help='Repeat times for training (default:5)')

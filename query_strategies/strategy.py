@@ -1,3 +1,4 @@
+from cv2 import transform
 import numpy as np
 import torch
 import time
@@ -24,6 +25,8 @@ class Strategy:
         self.test_kwargs = args.test_kwargs
         self.n_pool = len(Y)
         self.device = device
+
+        self.predict_unlabeled = np.zeros((self.n_pool, 10))
 
     def query(self, n):
         # *使用不同的筛选策略，不做统一规定
@@ -60,6 +63,26 @@ class Strategy:
                 ))
                 self.args.csv_record_trloss.write_data([self.args.sampling_time, epoch, batch_idx, loss.item()])
                 self.T.start()
+            
+        # -如果遇到了这一类方法，需要记录下这样一个大数组
+        if self.args.method[:2] == "LD":
+            if(epoch >= self.args.jump_epoch):
+                self.T.start();
+                idxs_unlabeled = np.arange(self.n_pool)[~self.idxs_lb]
+                UX = self.X[idxs_unlabeled]
+                UY = self.Y[idxs_unlabeled]
+                loader_te = DataLoader(self.handler(UX, UY, transform = self.test_transform), shuffle=False, **self.test_kwargs)
+                self.model.eval()
+                with torch.no_grad():
+                    for x, y, idx in loader_te:
+                        x, y = x.to(self.device), y.to(self.device)
+                        out, _ = self.model(x)
+                        pred = out.argmax(dim=1, keepdim=True).cpu()  # get the index of the max log-probability
+                        # *添加当前的预测结果
+                        self.predict_unlabeled[idxs_unlabeled[idx]][pred] += 1
+                tmp_time = self.T.stop();
+                self.log.logger.debug("预测未标记样本用时：{:.4f} s".format(tmp_time))
+
 
     def train(self):
         # csv_record_trloss = self.args.csv_record_trloss
@@ -94,6 +117,7 @@ class Strategy:
                 scheduler.step()
 
         time_train_epoch = time.time() - time_start
+        self.predict_unlabeled = np.zeros((self.n_pool, 10))
         self.log.logger.debug('此次训练用时：{:.4f} s'.format(time_train_epoch))
 
 
