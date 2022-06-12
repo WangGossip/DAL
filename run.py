@@ -75,6 +75,10 @@ def main(args):
             args.sch = 'cos'
             args.epochs = 50
             args.tmax = 50
+            args.method_budget = "budget"
+            args.budget_init = 400
+            args.budget_once = 400
+            args.times = 9            
         elif DATASET_NAME == 'CIFAR10':
             args.model_name = 'ResNet'
             args.lr = 0.01
@@ -82,6 +86,10 @@ def main(args):
             args.sch = 'cos'
             args.tmax = 80
             args.epochs = 70
+            args.method_budget = "budget"
+            args.budget_init = 500
+            args.budget_once = 500
+            args.times = 9
     # 处理存储文件夹，args.out_path代表结果输出位置
     get_results_dir(args)
 
