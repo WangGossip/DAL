@@ -87,8 +87,8 @@ def main(args):
             args.tmax = 80
             args.epochs = 70
             args.method_budget = "budget"
-            args.budget_init = 500
-            args.budget_once = 500
+            args.budget_init = 1000
+            args.budget_once = 1000
             args.times = 9
     # 处理存储文件夹，args.out_path代表结果输出位置
     get_results_dir(args)

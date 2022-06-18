@@ -177,6 +177,66 @@ def use_mnist_data_j30():
 
     return list_mnist_data
 
+# fm j10
+def use_fashionmnist_data_j10():
+    list_fashionmnist_data = []
+    methods_name = ['LDAL', 'LDLC', 'RS']
+    DATA_NAME = 'FashionMNIST'
+    count_samples = [400, 800, 1200, 1600, 2000, 2400, 2800, 3200, 3600, 4000]
+    for method_name in methods_name:
+        tmp_fashionmnist_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_fashionmnist_data.append(tmp_fashionmnist_data)    
+    # *RS 
+    list_fashionmnist_data[2].add_final_acc([0.6192, 0.7073, 0.8025, 0.8466, 0.8655, 0.8752, 0.8834, 0.88718, 0.8891, 0.89112], 0.8981)
+    # *LDLC
+    list_fashionmnist_data[1].add_final_acc([0.62136, 0.74924, 0.81038, 0.84492, 0.86216, 0.8713, 0.87582, 0.8803, 0.88264, 0.88746], 0.8936)    
+    # *LDAL
+    list_fashionmnist_data[0].add_final_acc([0.61888, 0.7539, 0.81364, 0.84574, 0.8598, 0.86736, 0.87384, 0.87828, 0.88014, 0.88584], 0.8928)    
+    return list_fashionmnist_data
+# fm j40
+def use_fashionmnist_data_j40():
+    list_fashionmnist_data = []
+    methods_name = ['LDAL', 'LDLC']
+    DATA_NAME = 'FashionMNIST'
+    count_samples = [400, 800, 1200, 1600, 2000, 2400, 2800, 3200, 3600, 4000]
+    for method_name in methods_name:
+        tmp_fashionmnist_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_fashionmnist_data.append(tmp_fashionmnist_data)    
+    # *LDAL
+    list_fashionmnist_data[0].add_final_acc([0.62176, 0.73518, 0.81282, 0.84334, 0.86068, 0.86882, 0.87566, 0.87996, 0.8818, 0.88592], 0.8938)    
+    # *LDLC
+    list_fashionmnist_data[1].add_final_acc([0.63634, 0.751, 0.81528, 0.84128, 0.86244, 0.8697, 0.8755, 0.88026, 0.8789, 0.88692], 0.8933)    
+    return list_fashionmnist_data
+# cf j10
+def use_cifar10_data_j10():
+    list_cifar10_data = []
+    methods_name = ['LDAL', 'LDLC']
+    DATA_NAME = 'CIFAR10'
+    count_samples = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000]
+    for method_name in methods_name:
+        tmp_cifar10_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_cifar10_data.append(tmp_cifar10_data)
+    # *LDAL
+    list_cifar10_data[0].add_final_acc([0.39802, 0.486634, 0.55374, 0.59516, 0.62454, 0.65334, 0.6732, 0.68986, 0.70708, 0.71758], 0.7240)
+    # *LDLC
+    list_cifar10_data[1].add_final_acc([0.41222, 0.50854, 0.57426, 0.61582, 0.646, 0.67242, 0.69582, 0.7105, 0.7253, 0.73952], 0.7430)
+    return list_cifar10_data
+
+# cf j60
+def use_cifar10_data_j60():
+    list_cifar10_data = []
+    methods_name = ['LDAL', 'LDLC']
+    DATA_NAME = 'CIFAR10'
+    count_samples = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000]
+    for method_name in methods_name:
+        tmp_cifar10_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_cifar10_data.append(tmp_cifar10_data)
+    # *LDAL
+    list_cifar10_data[0].add_final_acc([0.40436, 0.5072, 0.57026, 0.6119, 0.64254, 0.66874, 0.69116, 0.70774, 0.72562, 0.73466], 0.7386)
+    # *LDLC
+    list_cifar10_data[1].add_final_acc([0.40158, 0.50206, 0.5638, 0.6056, 0.63492, 0.66358, 0.68356, 0.6976, 0.71592, 0.73016], 0.7358)
+    return list_cifar10_data
+
 
 # *功能：处理MNIST实验1数据
 def use_mnist_data():
@@ -466,30 +526,48 @@ def main():
     
     # *EXP1部分
     # todo CIFAR10-BMMC部分数据待修改
-    #~ MNIST数据
-    list_mnist_data0 = use_mnist_data_j0()
-    draw_multi_data(list_mnist_data0, outpath, 'EXP0')
+    # #~ MNIST数据
+    # list_mnist_data0 = use_mnist_data_j0()
+    # draw_multi_data(list_mnist_data0, outpath, 'EXP0')
     
-    #~ MNIST数据
-    list_mnist_data10 = use_mnist_data_j10()
-    draw_multi_data(list_mnist_data10, outpath, 'EXP10')
+    # #~ MNIST数据
+    # list_mnist_data10 = use_mnist_data_j10()
+    # draw_multi_data(list_mnist_data10, outpath, 'EXP10')
 
-    #~ MNIST数据
-    list_mnist_data20 = use_mnist_data_j20()
-    draw_multi_data(list_mnist_data20, outpath, 'EXP20')
+    # #~ MNIST数据
+    # list_mnist_data20 = use_mnist_data_j20()
+    # draw_multi_data(list_mnist_data20, outpath, 'EXP20')
 
-    #~ MNIST数据
-    list_mnist_data30 = use_mnist_data_j30()
-    draw_multi_data(list_mnist_data30, outpath, 'EXP30')
+    # #~ MNIST数据
+    # list_mnist_data30 = use_mnist_data_j30()
+    # draw_multi_data(list_mnist_data30, outpath, 'EXP30')
 
-    for data in list_mnist_data0:
+    # for data in list_mnist_data0:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    # for data in list_mnist_data10:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))  
+    # for data in list_mnist_data20:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))        
+    # for data in list_mnist_data30:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))        
+    # ~ 0619数据
+    list_fashionmnist_data_j10 = use_fashionmnist_data_j10()
+    draw_multi_data(list_fashionmnist_data_j10, outpath, 'EXPFM10')
+    list_fashionmnist_data_j40 = use_fashionmnist_data_j40()
+    draw_multi_data(list_fashionmnist_data_j40, outpath, 'EXPFM40')
+    list_cifar10_data_j10 = use_cifar10_data_j10()
+    draw_multi_data(list_cifar10_data_j10, outpath, 'EXPCF10')
+    list_cifar10_data_j60 = use_cifar10_data_j60()
+    draw_multi_data(list_cifar10_data_j60, outpath, 'EXPCF60')
+
+    for data in list_fashionmnist_data_j10:
         print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
-    for data in list_mnist_data10:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))  
-    for data in list_mnist_data20:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))        
-    for data in list_mnist_data30:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))        
+    for data in list_fashionmnist_data_j40:
+        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    for data in list_cifar10_data_j10:
+        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    for data in list_cifar10_data_j60:
+        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
 
     # # *EXP2部分，不平衡数据集
     # list_cifar10im3_data = use_cifar10im3_data()
