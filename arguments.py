@@ -32,11 +32,23 @@ def get_args():
     parser.add_argument('--acc-expected', type=float, default=0.9,
                         help='Expected acc (default:0.9)')
     parser.add_argument('--times', type=int, default=10, metavar='T', 
-                        help='Times of sampling')                        
-
+                        help='Times of sampling')
+    parser.add_argument('--change-line', type=int, default=1000, metavar='T', 
+                        help='Num of change method')
+    parser.add_argument('--use-ld', action='store_true', default=False,
+                        help='Whether to use ld')
     # *DLAL训练参数
     parser.add_argument('--jump-epoch', type=int, default=10, metavar='N', 
                         help="Num of epochs to jump in training")
+    # *两阶段策略参数
+    parser.add_argument('--use-two', action="store_true", 
+                        help='whether to use a two-stage method')
+    parser.add_argument('--budget-first', type=int, default=200, 
+                        help='method in first strategy')
+    # -采样次数
+    parser.add_argument('--times-first', type=int, default=5, 
+                        help='sample times in first strategy')
+    parser.add_argument('--method-first', type=str, default='LC')
     # *训练&测试相关参数 
     parser.add_argument('--repeat-times', type = int, default=5, 
                         help='Repeat times for training (default:5)')

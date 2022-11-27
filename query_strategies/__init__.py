@@ -19,3 +19,5 @@ from .bmmc import BMMC_s
 from .least_confidence_dropout import LeastConfidenceDropout
 from .ldal import LearningDynamic
 from .ldlc import LearningDynamicLeastConfidence
+from .core_and_lc import CoreLC
+from .bmmc_and_lc import BMMC_LC

@@ -27,6 +27,9 @@ class Strategy:
         self.device = device
 
         self.predict_unlabeled = np.zeros((self.n_pool, 10))
+        self.predict_all = np.zeros((self.n_pool, 10))
+        # 用于多策略
+        self.change_line = args.change_line
 
     def query(self, n):
         # *使用不同的筛选策略，不做统一规定
@@ -63,7 +66,22 @@ class Strategy:
                 ))
                 self.args.csv_record_trloss.write_data([self.args.sampling_time, epoch, batch_idx, loss.item()])
                 self.T.start()
-            
+        # -用于计算ld分数使用
+        if self.args.use_ld :
+            self.T.start();
+            # idxs_unlabeled = np.arange(self.n_pool)[~self.idxs_lb]
+            loader_te = DataLoader(self.handler(self.X, self.Y, transform = self.test_transform), shuffle=False, **self.test_kwargs)
+            self.model.eval()
+            with torch.no_grad():
+                for x, y, idx in loader_te:
+                    x, y = x.to(self.device), y.to(self.device)
+                    out, _ = self.model(x)
+                    pred = out.argmax(dim=1, keepdim=True).cpu()  # get the index of the max log-probability
+                    # *添加当前的预测结果
+                    self.predict_all[idx][pred] += 1
+            tmp_time = self.T.stop();
+            self.log.logger.debug("预测未标记样本用时：{:.4f} s".format(tmp_time))
+
         # -如果遇到了这一类方法，需要记录下这样一个大数组
         if self.args.method[:2] == "LD":
             if(epoch >= self.args.jump_epoch):
@@ -122,6 +140,38 @@ class Strategy:
 
 
     def predict(self, X, Y):
+        self.T.start()
+
+        # 读取测试集
+        loader_te = DataLoader(self.handler(X, Y, transform=self.test_transform),
+                            shuffle=False, **self.test_kwargs)
+
+        len_testdata = len(loader_te.dataset)
+        self.model.eval()
+        test_loss = 0
+        correct = 0
+        # pred_te = torch.zeros(len(Y), dtype=Y.dtype)
+        with torch.no_grad():
+            for x, y, idxs in loader_te:
+                x, y = x.to(self.device), y.to(self.device)
+                out, _ = self.model(x)
+                test_loss += F.cross_entropy(out, y, reduction='sum').item()
+                # pred = out.max(1)[1]
+                pred = out.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+                correct += pred.eq(y.view_as(pred)).sum().item()
+                # pred_te[idxs] = pred.cpu()
+
+        test_loss /= len_testdata
+        acc = correct / len_testdata
+    
+        tmp_time = self.T.stop()
+        self.log.logger.info('采样次数：{}, 平均loss为：{:.4f}, 准确率为：{}/{}({:.2f}%), 预测用时：{}s'.
+                            format(self.args.sampling_time, test_loss, correct, len_testdata, 100*acc, tmp_time))
+        self.args.csv_record_tracc.write_data([self.args.sampling_time, self.args.n_budget_used, acc, test_loss])
+        return  acc
+
+# ~预测并统计各类的精度
+    def predict_each(self, X, Y):
         self.T.start()
 
         # 读取测试集

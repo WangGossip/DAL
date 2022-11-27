@@ -8,7 +8,7 @@ from torch.utils.data.dataset import Dataset
 
 # *个人编写文件库
 import arguments
-from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC, BALD, Core_Sets, CoreSets_s, BMMC_s, LearningDynamicLeastConfidence, LearningDynamic
+from query_strategies import strategy, RandomSampling, LeastConfidence, MarginSampling, EntropySampling, EntropySamplingThr, Entropy_Multi_Sampling, BMAL, BMALSampling, DRAL, CoreSets, BMCore, DRALE, BMMC, BALD, Core_Sets, CoreSets_s, BMMC_s, LearningDynamicLeastConfidence, LearningDynamic, CoreLC, BMMC_LC
 from function import  get_results_dir, draw_tracc, draw_samples_prop, get_init_samples, get_mnist_prop, get_hms_time, draw_acc_loss_all, draw_samples_prop_all
 from query_strategies.bmmc import BMMC_s
 from tools import Timer, csv_results, label_count
@@ -55,6 +55,8 @@ def main(args):
     DATASET_NAME = DATA_NAME
     if DATA_NAME[:7] == 'CIFAR10':
         DATASET_NAME = 'CIFAR10'
+    # -是否使用两次策略
+    is_use_two = args.use_two
     # *初始的参数设置
     use_args_default = not args.no_argsd
     if use_args_default:
@@ -65,9 +67,10 @@ def main(args):
             args.epochs = 50
             args.no_sch = True
             args.method_budget = "budget"
-            args.budget_init = 100
-            args.budget_once = 100
-            args.times = 9
+            args.budget_init = 10
+            args.budget_once = 10
+            args.times = 99
+            args.change_line = 500
         elif DATASET_NAME == 'FashionMNIST':
             args.model_name='ResNetF'
             args.lr = 0.065
@@ -76,9 +79,10 @@ def main(args):
             args.epochs = 50
             args.tmax = 50
             args.method_budget = "budget"
-            args.budget_init = 400
-            args.budget_once = 400
-            args.times = 9            
+            args.budget_init = 40
+            args.budget_once = 40
+            args.times = 99
+            args.change_line = 2000
         elif DATASET_NAME == 'CIFAR10':
             args.model_name = 'ResNet'
             args.lr = 0.01
@@ -87,9 +91,48 @@ def main(args):
             args.tmax = 80
             args.epochs = 70
             args.method_budget = "budget"
-            args.budget_init = 1000
-            args.budget_once = 1000
-            args.times = 9
+            args.budget_init = 100
+            args.budget_once = 100
+            args.times = 99
+            args.change_line = 5000
+
+    # if use_args_default:
+    #     if DATASET_NAME == 'MNIST':
+    #         args.model_name='Net1'
+    #         args.lr = 1
+    #         args.opt = 'adad'
+    #         args.epochs = 50
+    #         args.no_sch = True
+    #         args.method_budget = "budget"
+    #         args.budget_init = 100
+    #         args.budget_once = 100
+    #         args.times = 9
+    #         args.change_line = 500
+    #     elif DATASET_NAME == 'FashionMNIST':
+    #         args.model_name='ResNetF'
+    #         args.lr = 0.065
+    #         args.opt = 'sgd'
+    #         args.sch = 'cos'
+    #         args.epochs = 50
+    #         args.tmax = 50
+    #         args.method_budget = "budget"
+    #         args.budget_init = 400
+    #         args.budget_once = 400
+    #         args.times = 9            
+    #         args.change_line = 2000
+    #     elif DATASET_NAME == 'CIFAR10':
+    #         args.model_name = 'ResNet'
+    #         args.lr = 0.01
+    #         args.opt = 'sgd'
+    #         args.sch = 'cos'
+    #         args.tmax = 80
+    #         args.epochs = 70
+    #         args.method_budget = "budget"
+    #         args.budget_init = 1000
+    #         args.budget_once = 1000
+    #         args.times = 9
+    #         args.change_line = 5000
+            
     # 处理存储文件夹，args.out_path代表结果输出位置
     get_results_dir(args)
 
@@ -310,7 +353,13 @@ def main(args):
             strategy = LearningDynamic(X_tr, Y_tr, idxs_lb, net, handler, args, device)
         elif args.method == 'LDLC':
             strategy = LearningDynamicLeastConfidence(X_tr, Y_tr, idxs_lb, net, handler, args, device)
-
+        # Coreset + LC
+        elif args.method == 'CoreLC':
+            args.use_ld = True
+            strategy = CoreLC(X_tr, Y_tr, idxs_lb, net, handler, args, device)
+        elif args.method == 'BMLC':
+            args.use_ld = True
+            strategy = BMMC_LC(X_tr, Y_tr, idxs_lb, net, handler, args, device)
         # *训练开始
         log_run.logger.info('dataset is {},\n seed is {}, \nstrategy is {}\n'.format(DATA_NAME, SEED, type(strategy).__name__))
         # 一些参数，用于计数 首先初始化
@@ -338,6 +387,10 @@ def main(args):
         samples_count.append(tmp_count)
         samples_count_total.append(tmp_total_count)
         csv_record_trsample.write_data([rd, tmp_count, tmp_total_count])
+
+        # # 如果使用分阶段的策略
+        # if(is_use_two):
+
 
         # ~判断迭代终止条件：达到预算，或者准确率达到预期，即不满足其中一个即可终止
         while n_budget_used < n_budget and acc_tmp < acc_expected:

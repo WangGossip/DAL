@@ -237,7 +237,93 @@ def use_cifar10_data_j60():
     list_cifar10_data[1].add_final_acc([0.40158, 0.50206, 0.5638, 0.6056, 0.63492, 0.66358, 0.68356, 0.6976, 0.71592, 0.73016], 0.7358)
     return list_cifar10_data
 
+# cf 1000 j60
+def use_cifar10_data_1000_j60():
+    list_cifar10_data = []
+    methods_name = ['LDAL', 'LDLC', 'RS']
+    DATA_NAME = 'CIFAR10'
+    count_samples = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+    for method_name in methods_name:
+        tmp_cifar10_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_cifar10_data.append(tmp_cifar10_data)
+    # *LDAL
+    list_cifar10_data[0].add_final_acc([0.50116, 0.61942, 0.69008, 0.73672, 0.76654, 0.79392, 0.80994, 0.82298, 0.83456, 0.8451], 0.8485)
+    # *LDLC
+    list_cifar10_data[1].add_final_acc([0.4981, 0.61756, 0.6878, 0.73884, 0.7662, 0.79284, 0.8097, 0.82268, 0.8354399999999998, 0.845], 0.8485)
+    # *RS
+    list_cifar10_data[2].add_final_acc([0.5029, 0.6206, 0.68884, 0.73406, 0.76518, 0.7889, 0.80608, 0.8219, 0.83448, 0.84452], 0.8469)
+    return list_cifar10_data
 
+def use_mnist_data_corelc():
+    list_mnist_data = []
+    methods_name = ['RS', 'LC', 'K-Center-Greedy', 'CoreLC', 'CoreLC2']
+    DATA_NAME = 'MNIST'
+    count_samples = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    for method_name in methods_name:
+        tmp_mnist_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_mnist_data.append(tmp_mnist_data)
+    # *RS 
+    list_mnist_data[0].add_final_acc([0.80092, 0.88232, 0.906, 0.92484, 0.93256, 0.9422, 0.94754, 0.95202, 0.9561, 0.95706], 0.9518)
+    # *LC
+    list_mnist_data[1].add_accdata([0.789, 0.916, 0.9397, 0.9551, 0.9645, 0.9707, 0.975, 0.9761, 0.9788, 0.9795], 0.9814)
+    list_mnist_data[1].add_accdata([0.8313, 0.9022, 0.9339, 0.9532, 0.9659, 0.9706, 0.9746, 0.9759, 0.9785, 0.9783], 0.9820)
+    list_mnist_data[1].add_accdata([0.7709, 0.882, 0.9247, 0.9418, 0.961, 0.9641, 0.9712, 0.9752, 0.9782, 0.981], 0.9826)
+    list_mnist_data[1].add_accdata([0.7643, 0.886, 0.9304, 0.9525, 0.9635, 0.9663, 0.9711, 0.9769, 0.978, 0.9798], 0.9820)
+    list_mnist_data[1].add_accdata([0.8014, 0.9078, 0.9363, 0.9513, 0.9657, 0.9648, 0.9728, 0.9748, 0.9788, 0.9764], 0.9796)
+    list_mnist_data[1].caculate_finacc()
+    # *K-Center-Greedy
+    list_mnist_data[2].add_final_acc([0.80638, 0.8917, 0.92572, 0.93706, 0.94158, 0.95512, 0.95982, 0.9619, 0.9664, 0.97072], 0.9702)
+    # *CoreLC
+    list_mnist_data[3].add_final_acc([0.81262, 0.88662, 0.92198, 0.93574, 0.95022, 0.96598, 0.97222, 0.97502, 0.97726, 0.98086], 0.9810)
+    # *CoreLC2
+    list_mnist_data[4].add_final_acc([0.80618, 0.88792, 0.92846, 0.93918, 0.9494, 0.96786, 0.9727, 0.97648, 0.97848, 0.98044], 0.9820)
+    return list_mnist_data
+
+def use_fashionmnist_data_corelc():
+    list_fashionmnist_data = []
+    methods_name = ['RS', 'LC', 'K-Center-Greedy', 'CoreLC', 'CoreLC2']
+    DATA_NAME = 'FashionMNIST'
+    count_samples = [400, 800, 1200, 1600, 2000, 2400, 2800, 3200, 3600, 4000]
+    for method_name in methods_name:
+        tmp_fashionmnist_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_fashionmnist_data.append(tmp_fashionmnist_data)
+    # *RS 
+    list_fashionmnist_data[0].add_final_acc([0.6192, 0.7073, 0.8025, 0.8466, 0.8655, 0.8752, 0.8834, 0.88718, 0.8891, 0.89112], 0.8981)
+    # *LC
+    list_fashionmnist_data[1].add_accdata([0.649, 0.7793, 0.8114, 0.8611, 0.8902, 0.8984, 0.9029, 0.9059, 0.9088, 0.9097], 0.9282)
+    list_fashionmnist_data[1].add_accdata([0.7039, 0.7836, 0.8085, 0.862, 0.8831, 0.8952, 0.9, 0.9051, 0.9066, 0.9094], 0.9291)
+    list_fashionmnist_data[1].add_accdata([0.7187, 0.763, 0.822, 0.8558, 0.879, 0.8902, 0.9011, 0.9034, 0.9063, 0.91], 0.9267)
+    list_fashionmnist_data[1].add_accdata([0.5613, 0.675, 0.7362, 0.7812, 0.8717, 0.8731, 0.893, 0.9001, 0.9041, 0.9071], 0.923)
+    list_fashionmnist_data[1].add_accdata([0.6051, 0.6567, 0.7909, 0.8441, 0.878, 0.8876, 0.895, 0.9053, 0.907, 0.9083], 0.9286)
+    list_fashionmnist_data[1].caculate_finacc()
+    # *K-Center-Greedy
+    list_fashionmnist_data[2].add_final_acc([0.56274, 0.63708, 0.70584, 0.80566, 0.84892, 0.87284, 0.88486, 0.89096, 0.89604, 0.9024], 0.9124)
+    # *CoreLC 3次
+    list_fashionmnist_data[3].add_final_acc([0.62758, 0.72198, 0.79414, 0.82956, 0.8507, 0.88538, 0.89632, 0.90218, 0.9028, 0.9099], 0.9245)
+    # *CoreLC2 2次
+    list_fashionmnist_data[4].add_final_acc([0.60212, 0.71032, 0.7618, 0.81228, 0.85224, 0.8808, 0.8959, 0.9049, 0.9044, 0.9126], 0.9259)
+    return list_fashionmnist_data
+
+
+def use_cifar10_data_corelc():
+    list_cifar10_data = []
+    methods_name = ['RS', 'LC', 'K-Center-Greedy', 'CoreLC', 'CoreLC2']
+    DATA_NAME = 'CIFAR10'
+    count_samples = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+    for method_name in methods_name:
+        tmp_cifar10_data = data_train_acc(DATA_NAME, method_name, count_samples)
+        list_cifar10_data.append(tmp_cifar10_data)
+    # *RS 
+    list_cifar10_data[0].add_final_acc([0.5029, 0.6206, 0.68884, 0.73406, 0.76518, 0.7889, 0.80608, 0.8219, 0.83448, 0.84452], 0.8469)
+    # *LC
+    list_cifar10_data[1].add_final_acc([0.499, 0.62908, 0.71801, 0.77023, 0.80569, 0.83288, 0.84975, 0.86268, 0.87544, 0.88283], 0.9212)
+    # *K-Center-Greedy
+    list_cifar10_data[2].add_final_acc([0.50832, 0.63629, 0.71363, 0.76144, 0.79183, 0.818487, 0.83776, 0.852007, 0.863473, 0.874], 0.9022)
+    # *CoreLC
+    list_cifar10_data[3].add_final_acc([0.51096, 0.63222, 0.71248, 0.76422, 0.79574, 0.82712, 0.84624, 0.86058, 0.87298, 0.88122], 0.9198)
+    # *CoreLC2
+    list_cifar10_data[4].add_final_acc([0.50724, 0.6355, 0.70986, 0.7589, 0.79074, 0.82254, 0.84372, 0.85814, 0.86996, 0.87916], 0.91977)
+    return list_cifar10_data
 # *功能：处理MNIST实验1数据
 def use_mnist_data():
     list_mnist_data = []
@@ -520,10 +606,18 @@ def use_cifar10_bm_data():
 
 def main():
     # outpath='./acc_results_final'
-    outpath = './test_results_424'
+    # outpath = './test_results_424'
+    outpath = './test_results_220806'
     if not os.path.exists(outpath):
         os.mkdir(outpath)
-    
+    # ~0806数据
+    mnist_corelc = use_mnist_data_corelc()
+    draw_multi_data(mnist_corelc, outpath, 'MNIST')
+    cifar_corelc = use_cifar10_data_corelc()
+    draw_multi_data(cifar_corelc, outpath, 'CIFAR10')
+    fashion_corelc = use_fashionmnist_data_corelc()
+    draw_multi_data(fashion_corelc, outpath, 'FASHION_MNIST')
+
     # *EXP1部分
     # todo CIFAR10-BMMC部分数据待修改
     # #~ MNIST数据
@@ -551,23 +645,26 @@ def main():
     # for data in list_mnist_data30:
     #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))        
     # ~ 0619数据
-    list_fashionmnist_data_j10 = use_fashionmnist_data_j10()
-    draw_multi_data(list_fashionmnist_data_j10, outpath, 'EXPFM10')
-    list_fashionmnist_data_j40 = use_fashionmnist_data_j40()
-    draw_multi_data(list_fashionmnist_data_j40, outpath, 'EXPFM40')
-    list_cifar10_data_j10 = use_cifar10_data_j10()
-    draw_multi_data(list_cifar10_data_j10, outpath, 'EXPCF10')
-    list_cifar10_data_j60 = use_cifar10_data_j60()
-    draw_multi_data(list_cifar10_data_j60, outpath, 'EXPCF60')
-
-    for data in list_fashionmnist_data_j10:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
-    for data in list_fashionmnist_data_j40:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
-    for data in list_cifar10_data_j10:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
-    for data in list_cifar10_data_j60:
-        print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    # list_fashionmnist_data_j10 = use_fashionmnist_data_j10()
+    # draw_multi_data(list_fashionmnist_data_j10, outpath, 'EXPFM10')
+    # list_fashionmnist_data_j40 = use_fashionmnist_data_j40()
+    # draw_multi_data(list_fashionmnist_data_j40, outpath, 'EXPFM40')
+    # list_cifar10_data_j10 = use_cifar10_data_j10()
+    # draw_multi_data(list_cifar10_data_j10, outpath, 'EXPCF10')
+    # list_cifar10_data_j60 = use_cifar10_data_j60()
+    # draw_multi_data(list_cifar10_data_j60, outpath, 'EXPCF60')
+    # list_cifar10_data_1000_j60 = use_cifar10_data_1000_j60()
+    # draw_multi_data(list_cifar10_data_1000_j60, outpath, 'EXPCF100060')
+    # for data in list_fashionmnist_data_j10:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    # for data in list_fashionmnist_data_j40:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    # for data in list_cifar10_data_j10:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    # for data in list_cifar10_data_j60:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
+    # for data in list_cifar10_data_1000_j60:
+    #     print('data:{}; method:{}; 剩余训练集精度: {}; 测试集精度为：{}'.format(data.dataset, data.method, data.trpre_acc, data.list_finacc[-1]))
 
     # # *EXP2部分，不平衡数据集
     # list_cifar10im3_data = use_cifar10im3_data()
